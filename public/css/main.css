@@ -100,6 +100,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+    transform: translateX(-300px);
 }
 
 /* 主内容区域 */
@@ -538,4 +539,66 @@ body {
         flex-direction: column;
         gap: 10px;
     }
+}
+
+/* 编辑模式样式 */
+.edit-mode {
+    background-color: #fefefe;
+}
+
+.edit-mode .top-toolbar {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+}
+
+.edit-mode .schedule-container {
+    border: 2px dashed #ff6b6b;
+    border-radius: 8px;
+    background-color: #fff5f5;
+}
+
+.edit-mode .time-slot:empty::before {
+    content: '+';
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #ff6b6b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.edit-mode .time-slot:empty:hover::before {
+    background-color: #ff6b6b;
+    color: white;
+    border-radius: 4px;
+}
+
+/* 编辑模式下的删除按钮 */
+.edit-mode .delete-btn {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 18px;
+    height: 18px;
+    background-color: #ff4757;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.2s ease;
+}
+
+.edit-mode .delete-btn:hover {
+    background-color: #ff3838;
+    transform: scale(1.1);
+}
+
+.edit-mode .course-block {
+    position: relative;
 } 

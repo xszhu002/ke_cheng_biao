@@ -195,6 +195,14 @@ const ScheduleAPI = {
      */
     async reset(scheduleId) {
         return apiClient.post(`/schedules/${scheduleId}/reset`);
+    },
+
+    /**
+     * 获取原始课程表数据
+     * @param {number} scheduleId 课程表ID
+     */
+    async getOriginalCourses(scheduleId) {
+        return apiClient.get(`/schedules/${scheduleId}/original`);
     }
 };
 

@@ -293,6 +293,12 @@ class CalendarManager {
             return;
         }
 
+        // 检查是否在编辑模式
+        if (!this.scheduleManager.isEditMode) {
+            NotificationUtils.warning('请先进入编辑模式才能添加特需托管');
+            return;
+        }
+
         const modal = new ModalManager();
         modal.show({
             title: `添加特需托管 - ${dateStr}`,
@@ -333,7 +339,8 @@ class CalendarManager {
             specificDate: formData.get('specific_date'),
             courseName: formData.get('course_name'),
             classroom: formData.get('classroom'),
-            notes: formData.get('notes')
+            notes: formData.get('notes'),
+            isEditMode: this.scheduleManager.isEditMode
         };
 
         // 验证
@@ -351,7 +358,11 @@ class CalendarManager {
             this.renderCalendar();
             
             // 如果当前显示的是这一周，也更新课程表
-            await this.scheduleManager.loadWeekSchedule();
+            if (this.scheduleManager.isEditMode) {
+                await this.scheduleManager.loadOriginalCourses();
+            } else {
+                await this.scheduleManager.loadWeekSchedule();
+            }
             
             return true;
         } catch (error) {
@@ -365,6 +376,12 @@ class CalendarManager {
      * 编辑特需托管
      */
     async editSpecialCare(careId) {
+        // 检查是否在编辑模式
+        if (!this.scheduleManager.isEditMode) {
+            NotificationUtils.warning('请先进入编辑模式才能编辑特需托管');
+            return;
+        }
+
         console.log('编辑特需托管:', careId);
         NotificationUtils.info('编辑功能待实现');
     }
@@ -373,7 +390,13 @@ class CalendarManager {
      * 删除特需托管
      */
     async deleteSpecialCare(careId) {
-        if (!confirm('确定要删除这个特需托管吗？')) {
+        // 在普通模式下，只能删除临时特需托管
+        if (!this.scheduleManager.isEditMode) {
+            NotificationUtils.warning('请先进入编辑模式才能删除特需托管');
+            return;
+        }
+
+        if (!confirm('确定要删除这个特需托管吗？这将从原始课程表中删除。')) {
             return;
         }
 
@@ -386,7 +409,7 @@ class CalendarManager {
             this.renderCalendar();
             
             // 更新课程表
-            await this.scheduleManager.loadWeekSchedule();
+            await this.scheduleManager.loadOriginalCourses();
             
         } catch (error) {
             console.error('删除特需托管失败:', error);

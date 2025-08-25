@@ -34,7 +34,9 @@
             </div>
             <div class="toolbar-right">
                 <button id="calendar-toggle" class="btn btn-secondary">日历视图</button>
-                <button id="save-btn" class="btn btn-primary">保存</button>
+                <button id="edit-btn" class="btn btn-secondary">编辑课表</button>
+                <button id="save-btn" class="btn btn-primary" style="display: none;">保存</button>
+                <button id="cancel-edit-btn" class="btn btn-warning" style="display: none;">取消编辑</button>
                 <button id="reset-btn" class="btn btn-warning">复位</button>
             </div>
         </header>
@@ -360,7 +362,8 @@
                     courseName,
                     classroom,
                     teacher,
-                    notes
+                    notes,
+                    isEditMode: window.app.scheduleManager.isEditMode
                 };
                 
                 await API.Course.create(courseData);
@@ -371,7 +374,13 @@
                 
                 // 重新加载课程表
                 if (window.app && window.app.scheduleManager) {
-                    await window.app.scheduleManager.loadWeekSchedule();
+                    if (window.app.scheduleManager.isEditMode) {
+                        // 编辑模式下重新加载原始课程表
+                        await window.app.scheduleManager.loadOriginalCourses();
+                    } else {
+                        // 普通模式下重新加载周课程表
+                        await window.app.scheduleManager.loadWeekSchedule();
+                    }
                 }
                 
             } catch (error) {
@@ -399,7 +408,8 @@
                     specificDate,
                     courseName,
                     classroom,
-                    notes
+                    notes,
+                    isEditMode: window.app.scheduleManager.isEditMode
                 };
                 
                 await API.SpecialCare.create(careData);
@@ -410,7 +420,13 @@
                 
                 // 重新加载课程表
                 if (window.app && window.app.scheduleManager) {
-                    await window.app.scheduleManager.loadWeekSchedule();
+                    if (window.app.scheduleManager.isEditMode) {
+                        // 编辑模式下重新加载原始课程表
+                        await window.app.scheduleManager.loadOriginalCourses();
+                    } else {
+                        // 普通模式下重新加载周课程表
+                        await window.app.scheduleManager.loadWeekSchedule();
+                    }
                 }
                 
             } catch (error) {

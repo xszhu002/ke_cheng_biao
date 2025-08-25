@@ -137,10 +137,10 @@ app.get('/api/schedules/:scheduleId/week/:week', (req, res) => {
             const weekEnd = new Date(weekStart);
             weekEnd.setDate(weekStart.getDate() + 4); // 周五
             
-            // 获取该周的特需托管
+            // 获取该周的特需托管（只获取临时课程）
             const specialCareSql = `
                 SELECT * FROM course_arrangements 
-                WHERE schedule_id = ? AND course_type = 'special_care' 
+                WHERE schedule_id = ? AND course_type = 'special_care' AND is_original = FALSE
                 AND specific_date BETWEEN ? AND ?
                 ORDER BY specific_date
             `;
@@ -168,9 +168,9 @@ app.get('/api/schedules/:scheduleId/week/:week', (req, res) => {
 
 // 课程管理
 app.post('/api/courses', (req, res) => {
-    const { scheduleId, weekday, timeSlot, courseName, classroom, teacher, notes } = req.body;
+    const { scheduleId, weekday, timeSlot, courseName, classroom, teacher, notes, isEditMode } = req.body;
     
-    console.log('收到创建课程请求:', { scheduleId, weekday, timeSlot, courseName, classroom, teacher, notes });
+    console.log('收到创建课程请求:', { scheduleId, weekday, timeSlot, courseName, classroom, teacher, notes, isEditMode });
     
     // 验证参数
     if (!scheduleId || !weekday || !timeSlot || !courseName) {
@@ -178,13 +178,16 @@ app.post('/api/courses', (req, res) => {
         return;
     }
     
+    // 根据是否为编辑模式决定是否设为原始课程
+    const isOriginal = isEditMode === true;
+    
     const sql = `
         INSERT INTO course_arrangements 
-        (schedule_id, weekday, time_slot, course_name, classroom, notes, course_type)
-        VALUES (?, ?, ?, ?, ?, ?, 'regular')
+        (schedule_id, weekday, time_slot, course_name, classroom, notes, course_type, is_original)
+        VALUES (?, ?, ?, ?, ?, ?, 'regular', ?)
     `;
     
-    req.db.run(sql, [scheduleId, weekday, timeSlot, courseName, classroom || null, notes || null], function(err) {
+    req.db.run(sql, [scheduleId, weekday, timeSlot, courseName, classroom || null, notes || null, isOriginal], function(err) {
         if (err) {
             console.error('创建课程失败:', err.message);
             res.status(500).json({ error: '创建课程失败: ' + err.message });
@@ -198,20 +201,23 @@ app.post('/api/courses', (req, res) => {
                 course_name: courseName,
                 classroom: classroom || null,
                 notes: notes || null,
-                course_type: 'regular'
+                course_type: 'regular',
+                is_original: isOriginal
             };
             
-            // 记录操作历史
-            const historySql = `
-                INSERT INTO operation_history (schedule_id, operation_type, old_data, new_data)
-                VALUES (?, 'add', '{}', ?)
-            `;
-            
-            req.db.run(historySql, [scheduleId, JSON.stringify(newCourse)], (historyErr) => {
-                if (historyErr) {
-                    console.warn('记录添加课程历史失败:', historyErr.message);
-                }
-            });
+            // 只有非编辑模式才记录操作历史
+            if (!isEditMode) {
+                const historySql = `
+                    INSERT INTO operation_history (schedule_id, operation_type, old_data, new_data)
+                    VALUES (?, 'add', '{}', ?)
+                `;
+                
+                req.db.run(historySql, [scheduleId, JSON.stringify(newCourse)], (historyErr) => {
+                    if (historyErr) {
+                        console.warn('记录添加课程历史失败:', historyErr.message);
+                    }
+                });
+            }
             
             res.json({ 
                 id: courseId, 
@@ -303,13 +309,15 @@ app.put('/api/courses/:id/move', (req, res) => {
 app.delete('/api/courses/:id', (req, res) => {
     const courseId = req.params.id;
     
-    const sql = 'DELETE FROM course_arrangements WHERE id = ? AND course_type = "regular"';
+    // 删除课程（不限制course_type，可以删除原始课程）
+    const sql = 'DELETE FROM course_arrangements WHERE id = ?';
     
     req.db.run(sql, [courseId], function(err) {
         if (err) {
             console.error('删除课程失败:', err.message);
             res.status(500).json({ error: '删除课程失败: ' + err.message });
         } else {
+            console.log(`成功删除课程 ID: ${courseId}`);
             res.json({ message: '课程删除成功', changes: this.changes });
         }
     });
@@ -317,7 +325,7 @@ app.delete('/api/courses/:id', (req, res) => {
 
 // 特需托管管理
 app.post('/api/special-care', (req, res) => {
-    const { scheduleId, specificDate, courseName, classroom, notes } = req.body;
+    const { scheduleId, specificDate, courseName, classroom, notes, isEditMode } = req.body;
     
     // 验证参数
     if (!scheduleId || !specificDate || !courseName) {
@@ -325,13 +333,16 @@ app.post('/api/special-care', (req, res) => {
         return;
     }
     
+    // 根据是否为编辑模式决定是否设为原始课程
+    const isOriginal = isEditMode === true;
+    
     const sql = `
         INSERT INTO course_arrangements 
-        (schedule_id, time_slot, course_name, classroom, course_type, specific_date, notes)
-        VALUES (?, 9, ?, ?, 'special_care', ?, ?)
+        (schedule_id, time_slot, course_name, classroom, course_type, specific_date, notes, is_original)
+        VALUES (?, 9, ?, ?, 'special_care', ?, ?, ?)
     `;
     
-    req.db.run(sql, [scheduleId, courseName, classroom || null, specificDate, notes || null], function(err) {
+    req.db.run(sql, [scheduleId, courseName, classroom || null, specificDate, notes || null, isOriginal], function(err) {
         if (err) {
             console.error('添加特需托管失败:', err.message);
             res.status(500).json({ error: '添加特需托管失败: ' + err.message });
@@ -395,8 +406,9 @@ app.delete('/api/special-care/:id', (req, res) => {
     req.db.run(sql, [id], function(err) {
         if (err) {
             console.error('删除特需托管失败:', err.message);
-            res.status(500).json({ error: '删除特需托管失败' });
+            res.status(500).json({ error: '删除特需托管失败: ' + err.message });
         } else {
+            console.log(`成功删除特需托管 ID: ${id}`);
             res.json({ message: '特需托管删除成功', changes: this.changes });
         }
     });
@@ -405,6 +417,8 @@ app.delete('/api/special-care/:id', (req, res) => {
 // 保存为原始课程表
 app.post('/api/schedules/:id/save-original', (req, res) => {
     const scheduleId = req.params.id;
+    
+    console.log(`开始保存原始课程表，scheduleId: ${scheduleId}`);
     
     req.db.serialize(() => {
         // 开始事务
@@ -415,39 +429,128 @@ app.post('/api/schedules/:id/save-original', (req, res) => {
                 return;
             }
             
-            // 1. 清除当前的原始课程表标记
-            req.db.run(
-                'UPDATE course_arrangements SET is_original = FALSE WHERE schedule_id = ?',
+            // 1. 只获取编辑模式中显示的原始课程
+            req.db.all(
+                'SELECT * FROM course_arrangements WHERE schedule_id = ? AND is_original = TRUE',
                 [scheduleId],
-                (clearErr) => {
-                    if (clearErr) {
+                (selectErr, originalCourses) => {
+                    if (selectErr) {
                         req.db.run('ROLLBACK');
-                        console.error('清除原始标记失败:', clearErr.message);
-                        res.status(500).json({ error: '保存失败: ' + clearErr.message });
+                        console.error('查询原始课程失败:', selectErr.message);
+                        res.status(500).json({ error: '保存失败: ' + selectErr.message });
                         return;
                     }
                     
-                    // 2. 将当前课程表标记为原始
+                    console.log(`找到 ${originalCourses.length} 个原始课程`);
+                    
+                    // 2. 删除所有现有课程
                     req.db.run(
-                        'UPDATE course_arrangements SET is_original = TRUE WHERE schedule_id = ?',
+                        'DELETE FROM course_arrangements WHERE schedule_id = ?',
                         [scheduleId],
-                        (markErr) => {
-                            if (markErr) {
+                        function(deleteErr) {
+                            if (deleteErr) {
                                 req.db.run('ROLLBACK');
-                                console.error('标记原始课程表失败:', markErr.message);
-                                res.status(500).json({ error: '保存失败: ' + markErr.message });
+                                console.error('删除现有课程失败:', deleteErr.message);
+                                res.status(500).json({ error: '保存失败: ' + deleteErr.message });
                                 return;
                             }
                             
-                            // 3. 提交事务
-                            req.db.run('COMMIT', (commitErr) => {
-                                if (commitErr) {
-                                    console.error('提交事务失败:', commitErr.message);
-                                    res.status(500).json({ error: '保存失败: ' + commitErr.message });
-                                } else {
-                                    res.json({ message: '原始课程表保存成功' });
-                                }
+                            console.log(`删除了 ${this.changes} 个现有课程`);
+                            
+                            if (originalCourses.length === 0) {
+                                // 没有课程需要保存
+                                req.db.run('COMMIT', (commitErr) => {
+                                    if (commitErr) {
+                                        console.error('提交事务失败:', commitErr.message);
+                                        res.status(500).json({ error: '保存失败: ' + commitErr.message });
+                                    } else {
+                                        console.log('原始课程表保存成功（空课程表）');
+                                        res.json({ message: '原始课程表保存成功' });
+                                    }
+                                });
+                                return;
+                            }
+                            
+                            // 3. 分离常规课程和特需托管
+                            const regularCourses = originalCourses.filter(course => course.course_type !== 'special_care');
+                            const specialCareCourses = originalCourses.filter(course => course.course_type === 'special_care');
+                            
+                            // 4. 重新插入原始课程（包括常规课程和特需托管）
+                            const originalInsertPromises = originalCourses.map(course => {
+                                return new Promise((resolve, reject) => {
+                                    const insertSql = `
+                                        INSERT INTO course_arrangements 
+                                        (schedule_id, weekday, time_slot, course_name, classroom, course_type, specific_date, notes, is_original)
+                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)
+                                    `;
+                                    req.db.run(insertSql, [
+                                        course.schedule_id,
+                                        course.weekday,
+                                        course.time_slot,
+                                        course.course_name,
+                                        course.classroom,
+                                        course.course_type,
+                                        course.specific_date,
+                                        course.notes
+                                    ], function(insertErr) {
+                                        if (insertErr) {
+                                            console.error('重新创建原始课程失败:', insertErr.message);
+                                            reject(insertErr);
+                                        } else {
+                                            console.log(`重新创建原始课程: ${course.course_name}`);
+                                            resolve();
+                                        }
+                                    });
+                                });
                             });
+                            
+                            // 5. 为所有课程（包括常规课程和特需托管）创建临时副本
+                            const tempInsertPromises = originalCourses.map(course => {
+                                return new Promise((resolve, reject) => {
+                                    const insertSql = `
+                                        INSERT INTO course_arrangements 
+                                        (schedule_id, weekday, time_slot, course_name, classroom, course_type, specific_date, notes, is_original)
+                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, FALSE)
+                                    `;
+                                    req.db.run(insertSql, [
+                                        course.schedule_id,
+                                        course.weekday,
+                                        course.time_slot,
+                                        course.course_name,
+                                        course.classroom,
+                                        course.course_type,
+                                        course.specific_date,
+                                        course.notes
+                                    ], function(insertErr) {
+                                        if (insertErr) {
+                                            console.error('创建临时课程副本失败:', insertErr.message);
+                                            reject(insertErr);
+                                        } else {
+                                            console.log(`创建临时课程副本: ${course.course_name}`);
+                                            resolve();
+                                        }
+                                    });
+                                });
+                            });
+                            
+                            Promise.all([...originalInsertPromises, ...tempInsertPromises])
+                                .then(() => {
+                                    // 5. 提交事务
+                                    req.db.run('COMMIT', (commitErr) => {
+                                        if (commitErr) {
+                                            console.error('提交事务失败:', commitErr.message);
+                                            res.status(500).json({ error: '保存失败: ' + commitErr.message });
+                                        } else {
+                                            console.log('原始课程表保存成功');
+                                            res.json({ message: '原始课程表保存成功' });
+                                        }
+                                    });
+                                })
+                                .catch((insertErr) => {
+                                    req.db.run('ROLLBACK');
+                                    console.error('插入新课程失败:', insertErr.message);
+                                    res.status(500).json({ error: '保存失败: ' + insertErr.message });
+                                });
                         }
                     );
                 }
@@ -573,6 +676,46 @@ app.post('/api/schedules/:id/reset', (req, res) => {
                 });
             }
         );
+    });
+});
+
+// 获取原始课程表数据
+app.get('/api/schedules/:scheduleId/original', (req, res) => {
+    const scheduleId = req.params.scheduleId;
+    
+    // 获取原始课程（is_original = TRUE）
+    const regularSql = `
+        SELECT * FROM course_arrangements 
+        WHERE schedule_id = ? AND course_type = 'regular' AND weekday IS NOT NULL AND is_original = TRUE
+        ORDER BY weekday, time_slot
+    `;
+    
+    req.db.all(regularSql, [scheduleId], (err, regularCourses) => {
+        if (err) {
+            console.error('获取原始课程失败:', err.message);
+            res.status(500).json({ error: '获取原始课程失败' });
+            return;
+        }
+        
+        // 获取原始特需托管
+        const specialCareSql = `
+            SELECT * FROM course_arrangements 
+            WHERE schedule_id = ? AND course_type = 'special_care' AND is_original = TRUE
+            ORDER BY specific_date
+        `;
+        
+        req.db.all(specialCareSql, [scheduleId], (err, specialCare) => {
+            if (err) {
+                console.error('获取原始特需托管失败:', err.message);
+                res.status(500).json({ error: '获取原始特需托管失败' });
+                return;
+            }
+            
+            res.json({
+                regularCourses: regularCourses || [],
+                specialCare: specialCare || []
+            });
+        });
     });
 });
 

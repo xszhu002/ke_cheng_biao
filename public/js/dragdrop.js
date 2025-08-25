@@ -79,6 +79,14 @@ class DragDropManager {
      */
     handleDragStart(e) {
         const courseBlock = e.target;
+        
+        // 检查是否为特需托管，特需托管不允许拖拽
+        if (courseBlock.dataset.courseType === 'special_care') {
+            e.preventDefault();
+            NotificationUtils.warning('特需托管课程不能拖拽移动，请通过日历视图进行管理');
+            return;
+        }
+        
         this.draggedElement = courseBlock;
         
         // 获取课程数据
@@ -382,6 +390,12 @@ class DragDropManager {
      * 处理时间段点击事件 - 添加新课程
      */
     handleTimeSlotClick(e) {
+        // 检查是否在编辑模式
+        if (!this.scheduleManager.isEditMode) {
+            NotificationUtils.warning('请先点击"编辑课表"按钮进入编辑模式');
+            return;
+        }
+
         const timeSlot = e.target.closest('.time-slot');
         if (!timeSlot) return;
 
@@ -449,6 +463,12 @@ class DragDropManager {
     showAddSpecialCareDialog(weekday) {
         if (!this.scheduleManager.currentSchedule?.id) {
             NotificationUtils.error('请先选择课程表');
+            return;
+        }
+
+        // 检查是否在编辑模式
+        if (!this.scheduleManager.isEditMode) {
+            NotificationUtils.warning('请先进入编辑模式才能添加特需托管');
             return;
         }
 

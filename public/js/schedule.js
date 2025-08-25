@@ -11,6 +11,8 @@ class ScheduleManager {
         this.currentSemester = null;
         this.courses = [];
         this.specialCare = [];
+        this.isEditMode = false; // 编辑模式状态
+        this.originalCourses = []; // 存储原始课程数据备份
         
         // 时间段定义
         this.timeSlots = [
@@ -210,7 +212,7 @@ class ScheduleManager {
     /**
      * 渲染课程块
      */
-    renderCourseBlock(course) {
+    renderCourseBlock(course, isEditMode = false) {
         const timeSlot = DOMUtils.$(
             `.time-slot[data-weekday="${course.weekday}"][data-time-slot="${course.time_slot}"]`
         );
@@ -238,6 +240,21 @@ class ScheduleManager {
             className: 'course-classroom'
         }, course.classroom || '');
 
+        // 在编辑模式下添加删除按钮
+        if (isEditMode) {
+            const deleteBtn = DOMUtils.createElement('div', {
+                className: 'delete-btn'
+            }, '×');
+            
+            DOMUtils.on(deleteBtn, 'click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                this.deleteCourse(course.id, course.course_name);
+            });
+            
+            courseBlock.appendChild(deleteBtn);
+        }
+
         courseBlock.appendChild(courseName);
         if (course.classroom) {
             courseBlock.appendChild(courseClassroom);
@@ -251,7 +268,7 @@ class ScheduleManager {
     /**
      * 渲染特需托管块
      */
-    renderSpecialCareBlock(care) {
+    renderSpecialCareBlock(care, isEditMode = false) {
         const careDate = DateUtils.parseDate(care.specific_date);
         const weekday = careDate.getDay();
         
@@ -284,6 +301,8 @@ class ScheduleManager {
         const careDate2 = DOMUtils.createElement('div', {
             className: 'course-classroom'
         }, DateUtils.formatDate(careDate, 'MM-DD'));
+
+        // 特需托管不提供删除功能
 
         careBlock.appendChild(careName);
         careBlock.appendChild(careDate2);
@@ -350,6 +369,22 @@ class ScheduleManager {
         if (saveBtn) {
             DOMUtils.on(saveBtn, 'click', () => {
                 this.saveSchedule();
+            });
+        }
+
+        // 编辑课表按钮
+        const editBtn = DOMUtils.$('#edit-btn');
+        if (editBtn) {
+            DOMUtils.on(editBtn, 'click', () => {
+                this.toggleEditMode();
+            });
+        }
+
+        // 取消编辑按钮
+        const cancelEditBtn = DOMUtils.$('#cancel-edit-btn');
+        if (cancelEditBtn) {
+            DOMUtils.on(cancelEditBtn, 'click', () => {
+                this.cancelEdit();
             });
         }
 
@@ -426,7 +461,7 @@ class ScheduleManager {
     }
 
     /**
-     * 保存课程表（保存为原始课程表）
+     * 保存课程表
      */
     async saveSchedule() {
         if (!this.currentSchedule) {
@@ -434,6 +469,42 @@ class ScheduleManager {
             return;
         }
 
+        if (this.isEditMode) {
+            // 编辑模式：保存编辑后的原始课程表
+            await this.saveEditedOriginalSchedule();
+        } else {
+            // 普通模式：将当前课程表保存为原始课程表
+            await this.saveCurrentAsOriginal();
+        }
+    }
+
+    /**
+     * 保存编辑后的原始课程表
+     */
+    async saveEditedOriginalSchedule() {
+        if (confirm('确定要保存编辑后的原始课程表吗？')) {
+            try {
+                APIUtils.LoadingUtils.show('保存中...');
+                
+                const result = await API.Schedule.saveOriginal(this.currentSchedule.id);
+                NotificationUtils.success(result.message || '原始课程表保存成功');
+                
+                // 退出编辑模式
+                this.exitEditMode();
+                
+            } catch (error) {
+                console.error('保存原始课程表失败:', error);
+                NotificationUtils.error('保存失败: ' + error.message);
+            } finally {
+                APIUtils.LoadingUtils.hide();
+            }
+        }
+    }
+
+    /**
+     * 将当前课程表保存为原始课程表
+     */
+    async saveCurrentAsOriginal() {
         if (confirm('确定要将当前课程表保存为原始课程表吗？\n这将作为今后复位的基准。')) {
             try {
                 APIUtils.LoadingUtils.show('保存中...');
@@ -477,6 +548,173 @@ class ScheduleManager {
             }
         }
     }
+
+    /**
+     * 切换编辑模式
+     */
+    async toggleEditMode() {
+        if (!this.currentSchedule) {
+            NotificationUtils.warning('请先选择教师');
+            return;
+        }
+
+        if (this.isEditMode) {
+            // 退出编辑模式
+            this.exitEditMode();
+        } else {
+            // 进入编辑模式
+            await this.enterEditMode();
+        }
+    }
+
+    /**
+     * 进入编辑模式
+     */
+    async enterEditMode() {
+        try {
+            APIUtils.LoadingUtils.show('加载原始课程表...');
+            
+            // 加载原始课程表数据
+            await this.loadOriginalCourses();
+            
+            this.isEditMode = true;
+            this.updateEditModeUI();
+            
+            NotificationUtils.info('已进入编辑模式，可以添加、编辑、删除课程');
+            
+        } catch (error) {
+            console.error('进入编辑模式失败:', error);
+            NotificationUtils.error('进入编辑模式失败: ' + error.message);
+        } finally {
+            APIUtils.LoadingUtils.hide();
+        }
+    }
+
+    /**
+     * 退出编辑模式
+     */
+    exitEditMode() {
+        this.isEditMode = false;
+        this.originalCourses = [];
+        this.updateEditModeUI();
+        
+        // 重新加载普通课程表视图
+        this.loadWeekSchedule();
+        
+        NotificationUtils.info('已退出编辑模式');
+    }
+
+    /**
+     * 取消编辑
+     */
+    cancelEdit() {
+        if (confirm('确定要取消编辑吗？所有未保存的更改将丢失。')) {
+            this.exitEditMode();
+        }
+    }
+
+    /**
+     * 加载原始课程表
+     */
+    async loadOriginalCourses() {
+        if (!this.currentSchedule) return;
+
+        try {
+            // 获取原始课程表数据（is_original = TRUE）
+            const originalData = await API.Schedule.getOriginalCourses(this.currentSchedule.id);
+            
+            this.originalCourses = originalData.regularCourses || [];
+            this.specialCare = originalData.specialCare || [];
+            
+            // 渲染编辑模式的课程表
+            this.renderEditModeSchedule();
+            
+        } catch (error) {
+            console.error('加载原始课程表失败:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * 渲染编辑模式的课程表
+     */
+    renderEditModeSchedule() {
+        // 清空现有课程
+        this.clearScheduleTable();
+        
+        // 渲染原始课程（前8个时间段）
+        this.originalCourses.forEach(course => {
+            if (course.weekday && course.time_slot <= 8) {
+                this.renderCourseBlock(course, true); // 第二个参数表示编辑模式
+            }
+        });
+        
+        // 渲染特需托管（第9个时间段）
+        this.specialCare.forEach(care => {
+            this.renderSpecialCareBlock(care, true); // 第二个参数表示编辑模式
+        });
+    }
+
+    /**
+     * 更新编辑模式UI
+     */
+    updateEditModeUI() {
+        const editBtn = DOMUtils.$('#edit-btn');
+        const saveBtn = DOMUtils.$('#save-btn');
+        const cancelEditBtn = DOMUtils.$('#cancel-edit-btn');
+        const resetBtn = DOMUtils.$('#reset-btn');
+
+        if (this.isEditMode) {
+            // 编辑模式UI
+            if (editBtn) editBtn.style.display = 'none';
+            if (saveBtn) saveBtn.style.display = 'inline-block';
+            if (cancelEditBtn) cancelEditBtn.style.display = 'inline-block';
+            if (resetBtn) resetBtn.disabled = true;
+            
+            // 添加编辑模式的视觉提示
+            document.body.classList.add('edit-mode');
+            
+        } else {
+            // 普通模式UI
+            if (editBtn) editBtn.style.display = 'inline-block';
+            if (saveBtn) saveBtn.style.display = 'none';
+            if (cancelEditBtn) cancelEditBtn.style.display = 'none';
+            if (resetBtn) resetBtn.disabled = false;
+            
+            // 移除编辑模式的视觉提示
+            document.body.classList.remove('edit-mode');
+        }
+    }
+
+    /**
+     * 删除课程
+     */
+    async deleteCourse(courseId, courseName) {
+        if (!this.isEditMode) {
+            NotificationUtils.warning('请先进入编辑模式');
+            return;
+        }
+
+        if (confirm(`确定要删除课程"${courseName}"吗？`)) {
+            try {
+                APIUtils.LoadingUtils.show('删除中...');
+                
+                await API.Course.delete(courseId);
+                NotificationUtils.success('课程删除成功');
+                
+                // 重新加载编辑模式的课程表
+                await this.loadOriginalCourses();
+                
+            } catch (error) {
+                console.error('删除课程失败:', error);
+                NotificationUtils.error('删除失败: ' + error.message);
+            } finally {
+                APIUtils.LoadingUtils.hide();
+            }
+        }
+    }
+
+    // 特需托管删除功能已移除
 
     /**
      * 切换日历视图
