@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课程表管理系统</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/schedule.css">
+    <link rel="stylesheet" href="css/calendar.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 顶部工具栏 -->
+        <header class="top-toolbar">
+            <div class="toolbar-left">
+                <h1>课程表管理系统</h1>
+                <div class="teacher-selector">
+                    <label for="teacher-select">选择教师：</label>
+                    <select id="teacher-select">
+                        <option value="">请选择教师...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="toolbar-center">
+                <div class="week-navigation">
+                    <button id="prev-week" class="nav-btn">上一周</button>
+                    <span id="current-week" class="week-display">第1周</span>
+                    <button id="next-week" class="nav-btn">下一周</button>
+                </div>
+                <div class="date-range">
+                    <span id="date-range-display">请选择教师</span>
+                </div>
+            </div>
+            <div class="toolbar-right">
+                <button id="calendar-toggle" class="btn btn-secondary">日历视图</button>
+                <button id="save-btn" class="btn btn-primary">保存</button>
+                <button id="reset-btn" class="btn btn-warning">复位</button>
+            </div>
+        </header>
+
+        <!-- 主内容区域 -->
+        <main class="main-content">
+            <!-- 左侧功能面板 -->
+            <aside class="left-panel">
+                <div class="panel-section">
+                    <h3>课程表管理</h3>
+                    <button id="add-teacher-btn" class="btn btn-outline">添加教师</button>
+                    <button id="manage-schedule-btn" class="btn btn-outline">管理课程表</button>
+                </div>
+                
+                <div class="panel-section">
+                    <h3>特需托管</h3>
+                    <button id="add-special-care-btn" class="btn btn-outline">添加特需托管</button>
+                    <div id="special-care-list" class="special-care-list">
+                        <!-- 特需托管列表将动态加载 -->
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>操作历史</h3>
+                    <div id="operation-history" class="operation-history">
+                        <!-- 操作历史将动态加载 -->
+                    </div>
+                </div>
+            </aside>
+
+            <!-- 中央课程表区域 -->
+            <section class="schedule-container">
+                <div class="schedule-wrapper">
+                    <table class="schedule-table" id="schedule-table">
+                        <thead>
+                            <tr>
+                                <th class="time-header">星期/节数</th>
+                                <th>星期一</th>
+                                <th>星期二</th>
+                                <th>星期三</th>
+                                <th>星期四</th>
+                                <th>星期五</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 时间段行 -->
+                            <tr data-time-slot="1">
+                                <td class="time-slot-header">
+                                    <div class="time-info">
+                                        <span class="time-name">上午1</span>
+                                        <span class="time-range">8:30-9:10</span>
+                                    </div>
+                                </td>
+                                <td class="time-slot" data-weekday="1" data-time-slot="1"></td>
+                                <td class="time-slot" data-weekday="2" data-time-slot="1"></td>
+                                <td class="time-slot" data-weekday="3" data-time-slot="1"></td>
+                                <td class="time-slot" data-weekday="4" data-time-slot="1"></td>
+                                <td class="time-slot" data-weekday="5" data-time-slot="1"></td>
+                            </tr>
+                            <tr data-time-slot="2">
+                                <td class="time-slot-header">
+                                    <div class="time-info">
+                                        <span class="time-name">上午2</span>
+                                        <span class="time-range">9:50-10:30</span>
+                                    </div>
+                                </td>
+                                <td class="time-slot" data-weekday="1" data-time-slot="2"></td>
+                                <td class="time-slot" data-weekday="2" data-time-slot="2"></td>
+                                <td class="time-slot" data-weekday="3" data-time-slot="2"></td>
+                                <td class="time-slot" data-weekday="4" data-time-slot="2"></td>
+                                <td class="time-slot" data-weekday="5" data-time-slot="2"></td>
+                            </tr>
+                            <tr data-time-slot="3">
+                                <td class="time-slot-header">
+                                    <div class="time-info">
+                                        <span class="time-name">上午3</span>
+                                        <span class="time-range">10:45-11:30</span>
+                                    </div>
+                                </td>
+                                <td class="time-slot" data-weekday="1" data-time-slot="3"></td>
+                                <td class="time-slot" data-weekday="2" data-time-slot="3"></td>
+                                <td class="time-slot" data-weekday="3" data-time-slot="3"></td>
+                                <td class="time-slot" data-weekday="4" data-time-slot="3"></td>
+                                <td class="time-slot" data-weekday="5" data-time-slot="3"></td>
+                            </tr>
+                            <tr data-time-slot="4">
+                                <td class="time-slot-header">
+                                    <div class="time-info">
+                                        <span class="time-name">午间管理</span>
+                                        <span class="time-range">午休时间</span>
+                                    </div>
+                                </td>
+                                <td class="time-slot" data-weekday="1" data-time-slot="4"></td>
+                                <td class="time-slot" data-weekday="2" data-time-slot="4"></td>
+                                <td class="time-slot" data-weekday="3" data-time-slot="4"></td>
+                                <td class="time-slot" data-weekday="4" data-time-slot="4"></td>
+                                <td class="time-slot" data-weekday="5" data-time-slot="4"></td>
+                            </tr>
+                            <tr data-time-slot="5">
+                                <td class="time-slot-header">
+                                    <div class="time-info">
+                                        <span class="time-name">下午1</span>
+                                        <span class="time-range">13:30-14:10</span>
+                                    </div>
+                                </td>
+                                <td class="time-slot" data-weekday="1" data-time-slot="5"></td>
+                                <td class="time-slot" data-weekday="2" data-time-slot="5"></td>
+                                <td class="time-slot" data-weekday="3" data-time-slot="5"></td>
+                                <td class="time-slot" data-weekday="4" data-time-slot="5"></td>
+                                <td class="time-slot" data-weekday="5" data-time-slot="5"></td>
+                            </tr>
+                            <tr data-time-slot="6">
+                                <td class="time-slot-header">
+                                    <div class="time-info">
+                                        <span class="time-name">下午2</span>
+                                        <span class="time-range">14:20-15:05</span>
+                                    </div>
+                                </td>
+                                <td class="time-slot" data-weekday="1" data-time-slot="6"></td>
+                                <td class="time-slot" data-weekday="2" data-time-slot="6"></td>
+                                <td class="time-slot" data-weekday="3" data-time-slot="6"></td>
+                                <td class="time-slot" data-weekday="4" data-time-slot="6"></td>
+                                <td class="time-slot" data-weekday="5" data-time-slot="6"></td>
+                            </tr>
+                            <tr data-time-slot="7">
+                                <td class="time-slot-header">
+                                    <div class="time-info">
+                                        <span class="time-name">下午3</span>
+                                        <span class="time-range">15:15-15:55</span>
+                                    </div>
+                                </td>
+                                <td class="time-slot" data-weekday="1" data-time-slot="7"></td>
+                                <td class="time-slot" data-weekday="2" data-time-slot="7"></td>
+                                <td class="time-slot" data-weekday="3" data-time-slot="7"></td>
+                                <td class="time-slot" data-weekday="4" data-time-slot="7"></td>
+                                <td class="time-slot" data-weekday="5" data-time-slot="7"></td>
+                            </tr>
+                            <tr data-time-slot="8">
+                                <td class="time-slot-header">
+                                    <div class="time-info">
+                                        <span class="time-name">晚托</span>
+                                        <span class="time-range">放学后托管</span>
+                                    </div>
+                                </td>
+                                <td class="time-slot" data-weekday="1" data-time-slot="8"></td>
+                                <td class="time-slot" data-weekday="2" data-time-slot="8"></td>
+                                <td class="time-slot" data-weekday="3" data-time-slot="8"></td>
+                                <td class="time-slot" data-weekday="4" data-time-slot="8"></td>
+                                <td class="time-slot" data-weekday="5" data-time-slot="8"></td>
+                            </tr>
+                            <tr data-time-slot="9" class="special-care-row">
+                                <td class="time-slot-header special-care-header">
+                                    <div class="time-info">
+                                        <span class="time-name">特需托管</span>
+                                        <span class="time-range">特殊安排</span>
+                                    </div>
+                                </td>
+                                <td class="time-slot special-care-slot" data-weekday="1" data-time-slot="9"></td>
+                                <td class="time-slot special-care-slot" data-weekday="2" data-time-slot="9"></td>
+                                <td class="time-slot special-care-slot" data-weekday="3" data-time-slot="9"></td>
+                                <td class="time-slot special-care-slot" data-weekday="4" data-time-slot="9"></td>
+                                <td class="time-slot special-care-slot" data-weekday="5" data-time-slot="9"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 右侧信息面板 -->
+            <aside class="right-panel">
+                <div class="panel-section">
+                    <h3>课程详情</h3>
+                    <div id="course-details" class="course-details">
+                        <p>点击课程查看详情</p>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>快速操作</h3>
+                    <div class="quick-actions">
+                        <button id="add-course-btn" class="btn btn-outline">添加课程</button>
+                        <button id="bulk-edit-btn" class="btn btn-outline">批量编辑</button>
+                        <button id="export-btn" class="btn btn-outline">导出课程表</button>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- 日历视图（默认隐藏） -->
+        <div id="calendar-view" class="calendar-view" style="display: none;">
+            <div class="calendar-header">
+                <button id="calendar-prev-month" class="nav-btn">上个月</button>
+                <h2 id="calendar-month-year">2024年9月</h2>
+                <button id="calendar-next-month" class="nav-btn">下个月</button>
+                <button id="calendar-close" class="btn btn-secondary">关闭日历</button>
+            </div>
+            <div id="calendar-grid" class="calendar-grid">
+                <!-- 日历网格将动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 课程添加/编辑模态框 -->
+    <div id="course-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">添加课程</h3>
+                <button class="modal-close" onclick="this.closest('.modal-overlay').style.display='none'">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="course-form">
+                    <div class="form-group">
+                        <label for="course-name">课程名称：</label>
+                        <input type="text" id="course-name" name="courseName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="course-classroom">教室：</label>
+                        <input type="text" id="course-classroom" name="classroom">
+                    </div>
+                    <div class="form-group">
+                        <label for="course-teacher">任课教师：</label>
+                        <input type="text" id="course-teacher" name="teacher" readonly style="background-color: #f8f9fa;">
+                    </div>
+                    <div class="form-group">
+                        <label for="course-notes">备注：</label>
+                        <textarea id="course-notes" name="notes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="this.closest('.modal-overlay').style.display='none'">取消</button>
+                <button type="button" class="btn btn-primary" onclick="submitCourseForm()">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 特需托管添加/编辑模态框 -->
+    <div id="special-care-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">添加特需托管</h3>
+                <button class="modal-close" onclick="this.closest('.modal-overlay').style.display='none'">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="special-care-form">
+                    <div class="form-group">
+                        <label for="care-date">日期：</label>
+                        <input type="date" id="care-date" name="specificDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="care-name">托管名称：</label>
+                        <input type="text" id="care-name" name="courseName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="care-classroom">地点：</label>
+                        <input type="text" id="care-classroom" name="classroom">
+                    </div>
+                    <div class="form-group">
+                        <label for="care-notes">备注：</label>
+                        <textarea id="care-notes" name="notes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="this.closest('.modal-overlay').style.display='none'">取消</button>
+                <button type="button" class="btn btn-primary" onclick="submitSpecialCareForm()">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通用模态对话框 -->
+    <div id="modal-overlay" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">标题</h3>
+                <button id="modal-close" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- 模态框内容将动态加载 -->
+            </div>
+            <div class="modal-footer">
+                <button id="modal-cancel" class="btn btn-secondary">取消</button>
+                <button id="modal-confirm" class="btn btn-primary">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载指示器 -->
+    <div id="loading-indicator" class="loading-indicator" style="display: none;">
+        <div class="spinner"></div>
+        <p>加载中...</p>
+    </div>
+
+    <!-- JavaScript文件 -->
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/dragdrop.js"></script>
+    <script src="js/schedule.js"></script>
+    <script src="js/calendar.js"></script>
+    <script src="js/app.js"></script>
+    
+    <script>
+        // 提交课程表单
+        async function submitCourseForm() {
+            const form = document.getElementById('course-form');
+            
+            try {
+                // 直接获取表单字段的值
+                const scheduleId = parseInt(form.dataset.scheduleId);
+                const weekday = parseInt(form.dataset.weekday);
+                const timeSlot = parseInt(form.dataset.timeSlot);
+                const courseName = form.querySelector('#course-name').value;
+                const classroom = form.querySelector('#course-classroom').value;
+                const teacher = form.querySelector('#course-teacher').value;
+                const notes = form.querySelector('#course-notes').value;
+                
+                console.log('表单数据:', { scheduleId, weekday, timeSlot, courseName, classroom, teacher, notes });
+                
+                const courseData = {
+                    scheduleId,
+                    weekday,
+                    timeSlot,
+                    courseName,
+                    classroom,
+                    teacher,
+                    notes
+                };
+                
+                await API.Course.create(courseData);
+                NotificationUtils.success('课程添加成功');
+                
+                // 关闭模态框
+                document.getElementById('course-modal').style.display = 'none';
+                
+                // 重新加载课程表
+                if (window.app && window.app.scheduleManager) {
+                    await window.app.scheduleManager.loadWeekSchedule();
+                }
+                
+            } catch (error) {
+                console.error('添加课程失败:', error);
+                NotificationUtils.error('添加课程失败: ' + error.message);
+            }
+        }
+        
+        // 提交特需托管表单
+        async function submitSpecialCareForm() {
+            const form = document.getElementById('special-care-form');
+            
+            try {
+                // 直接获取表单字段的值
+                const scheduleId = parseInt(form.dataset.scheduleId);
+                const specificDate = form.querySelector('#care-date').value;
+                const courseName = form.querySelector('#care-name').value;
+                const classroom = form.querySelector('#care-classroom').value;
+                const notes = form.querySelector('#care-notes').value;
+                
+                console.log('特需托管数据:', { scheduleId, specificDate, courseName, classroom, notes });
+                
+                const careData = {
+                    scheduleId,
+                    specificDate,
+                    courseName,
+                    classroom,
+                    notes
+                };
+                
+                await API.SpecialCare.create(careData);
+                NotificationUtils.success('特需托管添加成功');
+                
+                // 关闭模态框
+                document.getElementById('special-care-modal').style.display = 'none';
+                
+                // 重新加载课程表
+                if (window.app && window.app.scheduleManager) {
+                    await window.app.scheduleManager.loadWeekSchedule();
+                }
+                
+            } catch (error) {
+                console.error('添加特需托管失败:', error);
+                NotificationUtils.error('添加特需托管失败: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html> 

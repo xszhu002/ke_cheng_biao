@@ -1,0 +1,463 @@
+/* 日历视图样式 */
+.calendar-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.calendar-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    animation: slideIn 0.4s ease;
+}
+
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.calendar-header h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.calendar-navigation {
+    display: flex;
+    gap: 10px;
+}
+
+/* 日历网格 */
+.calendar-grid {
+    padding: 20px;
+    background: white;
+}
+
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    margin-bottom: 10px;
+}
+
+.calendar-weekday {
+    text-align: center;
+    padding: 10px 5px;
+    font-weight: 600;
+    color: #666;
+    background: #f8f9fa;
+    font-size: 14px;
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: #e9ecef;
+    border: 1px solid #e9ecef;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 8px 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    min-height: 80px;
+}
+
+.calendar-day:hover {
+    background: #f8f9fa;
+    transform: scale(1.02);
+    z-index: 10;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.calendar-day.other-month {
+    background: #f8f9fa;
+    color: #adb5bd;
+}
+
+.calendar-day.today {
+    background: #e3f2fd;
+    border: 2px solid #2196f3;
+    font-weight: 600;
+    color: #1976d2;
+}
+
+.calendar-day.selected {
+    background: #fff3e0;
+    border: 2px solid #ff9800;
+    color: #f57c00;
+}
+
+.calendar-day.has-special-care {
+    background: #fff8e1;
+    border: 2px solid #ffc107;
+}
+
+.calendar-day.current-week {
+    box-shadow: inset 0 0 0 2px #667eea;
+}
+
+/* 日期数字 */
+.calendar-day-number {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+/* 特需托管标记 */
+.special-care-indicator {
+    width: 6px;
+    height: 6px;
+    background: #ff9800;
+    border-radius: 50%;
+    margin: 1px;
+}
+
+.special-care-count {
+    font-size: 10px;
+    background: #ff9800;
+    color: white;
+    padding: 1px 4px;
+    border-radius: 8px;
+    margin-top: 2px;
+}
+
+/* 周数标记 */
+.week-number {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    font-size: 9px;
+    color: #666;
+    background: rgba(255,255,255,0.8);
+    padding: 1px 3px;
+    border-radius: 3px;
+}
+
+/* 日历事件列表 */
+.calendar-events {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin-top: 4px;
+    max-height: 40px;
+    overflow: hidden;
+}
+
+.calendar-event {
+    font-size: 8px;
+    padding: 1px 3px;
+    border-radius: 2px;
+    color: white;
+    background: #007bff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.calendar-event.special-care {
+    background: #ff9800;
+}
+
+/* 日历工具提示 */
+.calendar-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    margin-bottom: 5px;
+    z-index: 20;
+    display: none;
+    max-width: 200px;
+}
+
+.calendar-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #333;
+}
+
+.calendar-day:hover .calendar-tooltip {
+    display: block;
+}
+
+/* 特需托管设置面板 */
+.special-care-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    padding: 20px;
+    z-index: 1001;
+    min-width: 400px;
+    max-width: 500px;
+}
+
+.special-care-panel h3 {
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 18px;
+}
+
+.special-care-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #555;
+    font-size: 14px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102,126,234,0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* 日历快速操作 */
+.calendar-quick-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding: 0 20px;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 15px;
+}
+
+.quick-action-btn {
+    padding: 6px 12px;
+    border: 1px solid #dee2e6;
+    background: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.quick-action-btn:hover {
+    background: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+.quick-action-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+/* 批量选择模式 */
+.calendar-view.bulk-select-mode .calendar-day {
+    cursor: pointer;
+}
+
+.calendar-view.bulk-select-mode .calendar-day.selected {
+    background: #e3f2fd;
+    border: 2px solid #2196f3;
+}
+
+/* 日历图例 */
+.calendar-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 15px 20px;
+    background: #f8f9fa;
+    font-size: 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.legend-color.today {
+    background: #2196f3;
+}
+
+.legend-color.special-care {
+    background: #ff9800;
+}
+
+.legend-color.current-week {
+    background: #667eea;
+}
+
+.legend-color.selected {
+    background: #f57c00;
+}
+
+/* 月份导航 */
+.month-navigation {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.month-nav-btn {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.month-nav-btn:hover {
+    background: rgba(255,255,255,0.3);
+    border-color: rgba(255,255,255,0.5);
+}
+
+.month-nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 响应式日历 */
+@media (max-width: 768px) {
+    .calendar-container {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .calendar-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .calendar-header h2 {
+        font-size: 20px;
+    }
+    
+    .calendar-day {
+        min-height: 60px;
+        padding: 4px 2px;
+    }
+    
+    .calendar-day-number {
+        font-size: 14px;
+    }
+    
+    .calendar-event {
+        font-size: 7px;
+    }
+    
+    .special-care-panel {
+        width: 90%;
+        min-width: unset;
+        margin: 20px;
+    }
+    
+    .calendar-quick-actions {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .quick-action-btn {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .calendar-weekday {
+        font-size: 12px;
+        padding: 5px 2px;
+    }
+    
+    .calendar-day {
+        min-height: 50px;
+    }
+    
+    .calendar-day-number {
+        font-size: 12px;
+    }
+    
+    .week-number {
+        display: none;
+    }
+    
+    .calendar-events {
+        display: none;
+    }
+} 
