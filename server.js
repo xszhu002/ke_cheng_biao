@@ -3,6 +3,9 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
+const bcrypt = require('bcryptjs');
+const session = require('express-session');
+const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +25,17 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// 会话配置
+app.use(session({
+    secret: 'schedule-system-secret-key-2024',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: false, // 在HTTPS中设为true
+        maxAge: 3600000 // 1小时
+    }
+}));
+
 // 调试中间件 - 放在body parser之后
 app.use((req, res, next) => {
     if ((req.method === 'PUT' || req.method === 'POST') && req.url.includes('/api/courses')) {
@@ -38,6 +52,25 @@ app.use((req, res, next) => {
 // 静态文件服务
 app.use(express.static(path.join(__dirname, 'public')));
 
+// 管理员认证中间件
+function requireAuth(req, res, next) {
+    if (req.session && req.session.adminId) {
+        return next();
+    } else {
+        return res.status(401).json({ error: '需要管理员登录' });
+    }
+}
+
+// 工具函数：生成密码哈希
+async function hashPassword(password) {
+    return await bcrypt.hash(password, 10);
+}
+
+// 工具函数：验证密码
+async function verifyPassword(password, hash) {
+    return await bcrypt.compare(password, hash);
+}
+
 // 将数据库实例添加到请求对象中
 app.use((req, res, next) => {
     req.db = db;
@@ -47,7 +80,13 @@ app.use((req, res, next) => {
 // API路由
 // 教师管理
 app.get('/api/teachers', (req, res) => {
-    const sql = 'SELECT * FROM teachers ORDER BY name';
+    const sql = `
+        SELECT DISTINCT t.* 
+        FROM teachers t 
+        INNER JOIN schedules s ON t.id = s.teacher_id 
+        WHERE s.is_active = 1 AND (s.is_archived IS NULL OR s.is_archived = FALSE)
+        ORDER BY t.name
+    `;
     req.db.all(sql, [], (err, rows) => {
         if (err) {
             console.error('获取教师列表失败:', err.message);
@@ -85,7 +124,7 @@ app.get('/api/schedules/teacher/:teacherId', (req, res) => {
         SELECT s.*, t.name as teacher_name 
         FROM schedules s 
         JOIN teachers t ON s.teacher_id = t.id 
-        WHERE s.teacher_id = ? AND s.is_active = 1
+        WHERE s.teacher_id = ? AND s.is_active = 1 AND (s.is_archived IS NULL OR s.is_archived = FALSE)
     `;
     
     req.db.get(sql, [teacherId], (err, row) => {
@@ -728,6 +767,650 @@ app.get('/api/calendar/semester/current', (req, res) => {
             res.status(500).json({ error: '获取当前学期失败' });
         } else {
             res.json(row || {});
+        }
+    });
+});
+
+// ===========================================
+// 管理员API
+// ===========================================
+
+// 教师管理API
+// 获取所有教师
+app.get('/api/admin/teachers', requireAuth, (req, res) => {
+    console.log('获取教师列表请求');
+    
+    const sql = `SELECT 
+        id, name, email, subject, phone, 
+        created_at, updated_at 
+        FROM teachers 
+        ORDER BY name`;
+    
+    req.db.all(sql, [], (err, rows) => {
+        if (err) {
+            console.error('获取教师列表失败:', err.message);
+            res.status(500).json({ error: '获取教师列表失败' });
+        } else {
+            console.log(`获取到 ${rows.length} 个教师`);
+            res.json(rows || []);
+        }
+    });
+});
+
+// 创建新教师
+app.post('/api/admin/teachers', requireAuth, (req, res) => {
+    const { name, email, subject, phone } = req.body;
+    
+    console.log('创建教师请求:', { name, email, subject, phone });
+    
+    // 验证必填字段
+    if (!name || !email) {
+        return res.status(400).json({ error: '姓名和邮箱为必填字段' });
+    }
+    
+    const sql = `INSERT INTO teachers (name, email, subject, phone) VALUES (?, ?, ?, ?)`;
+    
+    req.db.run(sql, [name, email, subject || '', phone || ''], function(err) {
+        if (err) {
+            console.error('创建教师失败:', err.message);
+            if (err.message.includes('UNIQUE constraint failed')) {
+                res.status(400).json({ error: '邮箱已存在' });
+            } else {
+                res.status(500).json({ error: '创建教师失败' });
+            }
+        } else {
+            console.log('教师创建成功，ID:', this.lastID);
+            res.json({ 
+                message: '教师创建成功', 
+                teacherId: this.lastID 
+            });
+        }
+    });
+});
+
+// 更新教师信息
+app.put('/api/admin/teachers/:id', requireAuth, (req, res) => {
+    const teacherId = req.params.id;
+    const { name, email, subject, phone } = req.body;
+    
+    console.log('更新教师请求:', { teacherId, name, email, subject, phone });
+    
+    // 验证必填字段
+    if (!name || !email) {
+        return res.status(400).json({ error: '姓名和邮箱为必填字段' });
+    }
+    
+    const sql = `UPDATE teachers 
+                 SET name = ?, email = ?, subject = ?, phone = ?, 
+                     updated_at = CURRENT_TIMESTAMP 
+                 WHERE id = ?`;
+    
+    req.db.run(sql, [name, email, subject || '', phone || '', teacherId], function(err) {
+        if (err) {
+            console.error('更新教师失败:', err.message);
+            if (err.message.includes('UNIQUE constraint failed')) {
+                res.status(400).json({ error: '邮箱已存在' });
+            } else {
+                res.status(500).json({ error: '更新教师失败' });
+            }
+        } else if (this.changes === 0) {
+            res.status(404).json({ error: '教师不存在' });
+        } else {
+            console.log('教师更新成功');
+            res.json({ message: '教师更新成功' });
+        }
+    });
+});
+
+// 删除教师（带课表检查）
+app.delete('/api/admin/teachers/:id', requireAuth, (req, res) => {
+    const teacherId = req.params.id;
+    
+    console.log('删除教师请求:', { teacherId });
+    
+    // 首先检查该教师是否有关联的课表
+    const checkSchedulesSql = `SELECT COUNT(*) as count FROM schedules WHERE teacher_id = ?`;
+    
+    req.db.get(checkSchedulesSql, [teacherId], (err, row) => {
+        if (err) {
+            console.error('检查教师课表失败:', err.message);
+            return res.status(500).json({ error: '检查教师课表失败' });
+        }
+        
+        const scheduleCount = row.count;
+        console.log(`教师 ${teacherId} 有 ${scheduleCount} 个课表`);
+        
+        if (scheduleCount > 0) {
+            return res.status(400).json({ 
+                error: `无法删除教师，该教师还有 ${scheduleCount} 个关联的课表，请先删除相关课表后再删除教师账号`,
+                scheduleCount: scheduleCount
+            });
+        }
+        
+        // 如果没有关联课表，则可以删除教师
+        const deleteTeacherSql = `DELETE FROM teachers WHERE id = ?`;
+        
+        req.db.run(deleteTeacherSql, [teacherId], function(err) {
+            if (err) {
+                console.error('删除教师失败:', err.message);
+                res.status(500).json({ error: '删除教师失败' });
+            } else if (this.changes === 0) {
+                res.status(404).json({ error: '教师不存在' });
+            } else {
+                console.log('教师删除成功');
+                res.json({ message: '教师删除成功' });
+            }
+        });
+    });
+});
+
+// 获取教师的课表列表
+app.get('/api/admin/teachers/:id/schedules', requireAuth, (req, res) => {
+    const teacherId = req.params.id;
+    
+    console.log('获取教师课表列表请求:', { teacherId });
+    
+    const sql = `SELECT 
+        s.id, s.name, s.semester_id, s.is_archived,
+        sc.semester_name,
+        COUNT(ca.id) as course_count
+        FROM schedules s
+        LEFT JOIN semester_config sc ON s.semester_id = sc.id
+        LEFT JOIN course_arrangements ca ON s.id = ca.schedule_id AND ca.is_original = TRUE
+        WHERE s.teacher_id = ?
+        GROUP BY s.id, s.name, s.semester_id, s.is_archived, sc.semester_name
+        ORDER BY sc.start_date DESC, s.name`;
+    
+    req.db.all(sql, [teacherId], (err, rows) => {
+        if (err) {
+            console.error('获取教师课表列表失败:', err.message);
+            res.status(500).json({ error: '获取教师课表列表失败' });
+        } else {
+            console.log(`获取到教师 ${teacherId} 的 ${rows.length} 个课表`);
+            res.json(rows || []);
+        }
+    });
+});
+
+// 检查是否存在管理员账号
+app.get('/api/admin/check', (req, res) => {
+    const sql = 'SELECT COUNT(*) as count FROM admins WHERE is_active = TRUE';
+    req.db.get(sql, [], (err, row) => {
+        if (err) {
+            console.error('检查管理员账号失败:', err.message);
+            res.status(500).json({ error: '检查管理员账号失败' });
+        } else {
+            res.json({ 
+                hasAdmin: row.count > 0,
+                isLoggedIn: !!req.session.adminId 
+            });
+        }
+    });
+});
+
+// 创建首个管理员账号
+app.post('/api/admin/setup', async (req, res) => {
+    const { username, password, email, fullName } = req.body;
+    
+    if (!username || !password) {
+        return res.status(400).json({ error: '用户名和密码不能为空' });
+    }
+    
+    if (password.length < 6) {
+        return res.status(400).json({ error: '密码长度至少6位' });
+    }
+    
+    try {
+        // 检查是否已有管理员
+        const checkSql = 'SELECT COUNT(*) as count FROM admins WHERE is_active = TRUE';
+        req.db.get(checkSql, [], async (err, row) => {
+            if (err) {
+                return res.status(500).json({ error: '检查管理员账号失败' });
+            }
+            
+            if (row.count > 0) {
+                return res.status(400).json({ error: '管理员账号已存在' });
+            }
+            
+            // 创建管理员账号
+            const passwordHash = await hashPassword(password);
+            const insertSql = `
+                INSERT INTO admins (username, password_hash, email, full_name)
+                VALUES (?, ?, ?, ?)
+            `;
+            
+            req.db.run(insertSql, [username, passwordHash, email || null, fullName || null], function(err) {
+                if (err) {
+                    console.error('创建管理员失败:', err.message);
+                    res.status(500).json({ error: '创建管理员失败' });
+                } else {
+                    res.json({ message: '管理员账号创建成功', adminId: this.lastID });
+                }
+            });
+        });
+    } catch (error) {
+        console.error('创建管理员失败:', error);
+        res.status(500).json({ error: '创建管理员失败' });
+    }
+});
+
+// 管理员登录
+app.post('/api/admin/login', async (req, res) => {
+    const { username, password } = req.body;
+    
+    if (!username || !password) {
+        return res.status(400).json({ error: '用户名和密码不能为空' });
+    }
+    
+    const sql = 'SELECT * FROM admins WHERE username = ? AND is_active = TRUE';
+    req.db.get(sql, [username], async (err, admin) => {
+        if (err) {
+            console.error('登录查询失败:', err.message);
+            return res.status(500).json({ error: '登录失败' });
+        }
+        
+        if (!admin) {
+            return res.status(401).json({ error: '用户名或密码错误' });
+        }
+        
+        try {
+            const isValidPassword = await verifyPassword(password, admin.password_hash);
+            if (!isValidPassword) {
+                return res.status(401).json({ error: '用户名或密码错误' });
+            }
+            
+            // 设置会话
+            req.session.adminId = admin.id;
+            req.session.username = admin.username;
+            
+            // 更新最后登录时间
+            const updateSql = 'UPDATE admins SET last_login = CURRENT_TIMESTAMP WHERE id = ?';
+            req.db.run(updateSql, [admin.id]);
+            
+            res.json({
+                message: '登录成功',
+                admin: {
+                    id: admin.id,
+                    username: admin.username,
+                    email: admin.email,
+                    fullName: admin.full_name
+                }
+            });
+            
+        } catch (error) {
+            console.error('密码验证失败:', error);
+            res.status(500).json({ error: '登录失败' });
+        }
+    });
+});
+
+// 管理员退出登录
+app.post('/api/admin/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('注销失败:', err);
+            res.status(500).json({ error: '注销失败' });
+        } else {
+            res.json({ message: '已成功退出登录' });
+        }
+    });
+});
+
+// 获取当前登录的管理员信息
+app.get('/api/admin/profile', requireAuth, (req, res) => {
+    const sql = 'SELECT id, username, email, full_name, last_login FROM admins WHERE id = ?';
+    req.db.get(sql, [req.session.adminId], (err, admin) => {
+        if (err) {
+            console.error('获取管理员信息失败:', err.message);
+            res.status(500).json({ error: '获取管理员信息失败' });
+        } else if (!admin) {
+            res.status(404).json({ error: '管理员不存在' });
+        } else {
+            res.json(admin);
+        }
+    });
+});
+
+// 获取系统设置
+app.get('/api/admin/settings', requireAuth, (req, res) => {
+    const sql = 'SELECT * FROM system_settings ORDER BY setting_key';
+    req.db.all(sql, [], (err, rows) => {
+        if (err) {
+            console.error('获取系统设置失败:', err.message);
+            res.status(500).json({ error: '获取系统设置失败' });
+        } else {
+            res.json(rows);
+        }
+    });
+});
+
+// 更新系统设置
+app.put('/api/admin/settings/:key', requireAuth, (req, res) => {
+    const { key } = req.params;
+    const { value } = req.body;
+    
+    if (!value && value !== '') {
+        return res.status(400).json({ error: '设置值不能为空' });
+    }
+    
+    const sql = 'UPDATE system_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = ?';
+    req.db.run(sql, [value, key], function(err) {
+        if (err) {
+            console.error('更新系统设置失败:', err.message);
+            res.status(500).json({ error: '更新系统设置失败' });
+        } else if (this.changes === 0) {
+            res.status(404).json({ error: '设置项不存在' });
+        } else {
+            res.json({ message: '设置更新成功' });
+        }
+    });
+});
+
+// ===========================================
+// 学年学期管理API
+// ===========================================
+
+// 获取所有学期
+app.get('/api/admin/semesters', requireAuth, (req, res) => {
+    const sql = 'SELECT * FROM semester_config ORDER BY start_date DESC';
+    req.db.all(sql, [], (err, rows) => {
+        if (err) {
+            console.error('获取学期列表失败:', err.message);
+            res.status(500).json({ error: '获取学期列表失败' });
+        } else {
+            res.json(rows || []);
+        }
+    });
+});
+
+// 创建学期
+app.post('/api/admin/semesters', requireAuth, (req, res) => {
+    const { semesterName, startDate, endDate, isCurrent } = req.body;
+    
+    if (!semesterName || !startDate || !endDate) {
+        return res.status(400).json({ error: '学期名称、开始日期和结束日期不能为空' });
+    }
+    
+    req.db.run('BEGIN TRANSACTION', (beginErr) => {
+        if (beginErr) {
+            return res.status(500).json({ error: '创建学期失败' });
+        }
+        
+        // 如果设置为当前学期，先取消其他学期的当前状态
+        const updateOthersSql = isCurrent ? 
+            'UPDATE semester_config SET is_current = FALSE' : '';
+        
+        const executeUpdate = () => {
+            const insertSql = `
+                INSERT INTO semester_config (semester_name, start_date, end_date, is_current)
+                VALUES (?, ?, ?, ?)
+            `;
+            
+            req.db.run(insertSql, [semesterName, startDate, endDate, isCurrent || false], function(err) {
+                if (err) {
+                    req.db.run('ROLLBACK');
+                    console.error('创建学期失败:', err.message);
+                    res.status(500).json({ error: '创建学期失败' });
+                } else {
+                    req.db.run('COMMIT', (commitErr) => {
+                        if (commitErr) {
+                            res.status(500).json({ error: '创建学期失败' });
+                        } else {
+                            res.json({ message: '学期创建成功', semesterId: this.lastID });
+                        }
+                    });
+                }
+            });
+        };
+        
+        if (isCurrent) {
+            req.db.run(updateOthersSql, [], (err) => {
+                if (err) {
+                    req.db.run('ROLLBACK');
+                    return res.status(500).json({ error: '创建学期失败' });
+                }
+                executeUpdate();
+            });
+        } else {
+            executeUpdate();
+        }
+    });
+});
+
+// 更新学期
+app.put('/api/admin/semesters/:id', requireAuth, (req, res) => {
+    const { id } = req.params;
+    const { semesterName, startDate, endDate, isCurrent } = req.body;
+    
+    if (!semesterName || !startDate || !endDate) {
+        return res.status(400).json({ error: '学期名称、开始日期和结束日期不能为空' });
+    }
+    
+    req.db.run('BEGIN TRANSACTION', (beginErr) => {
+        if (beginErr) {
+            return res.status(500).json({ error: '更新学期失败' });
+        }
+        
+        const executeUpdate = () => {
+            const updateSql = `
+                UPDATE semester_config 
+                SET semester_name = ?, start_date = ?, end_date = ?, is_current = ?
+                WHERE id = ?
+            `;
+            
+            req.db.run(updateSql, [semesterName, startDate, endDate, isCurrent || false, id], function(err) {
+                if (err) {
+                    req.db.run('ROLLBACK');
+                    console.error('更新学期失败:', err.message);
+                    res.status(500).json({ error: '更新学期失败' });
+                } else if (this.changes === 0) {
+                    req.db.run('ROLLBACK');
+                    res.status(404).json({ error: '学期不存在' });
+                } else {
+                    req.db.run('COMMIT', (commitErr) => {
+                        if (commitErr) {
+                            res.status(500).json({ error: '更新学期失败' });
+                        } else {
+                            res.json({ message: '学期更新成功' });
+                        }
+                    });
+                }
+            });
+        };
+        
+        if (isCurrent) {
+            // 先取消其他学期的当前状态
+            req.db.run('UPDATE semester_config SET is_current = FALSE WHERE id != ?', [id], (err) => {
+                if (err) {
+                    req.db.run('ROLLBACK');
+                    return res.status(500).json({ error: '更新学期失败' });
+                }
+                executeUpdate();
+            });
+        } else {
+            executeUpdate();
+        }
+    });
+});
+
+// 删除学期
+app.delete('/api/admin/semesters/:id', requireAuth, (req, res) => {
+    const { id } = req.params;
+    
+    // 检查是否有关联的课程表
+    const checkSql = 'SELECT COUNT(*) as count FROM schedules WHERE semester_id = ?';
+    req.db.get(checkSql, [id], (err, row) => {
+        if (err) {
+            console.error('检查学期关联失败:', err.message);
+            return res.status(500).json({ error: '删除学期失败' });
+        }
+        
+        if (row.count > 0) {
+            return res.status(400).json({ error: '该学期下有课程表，无法删除' });
+        }
+        
+        const deleteSql = 'DELETE FROM semester_config WHERE id = ?';
+        req.db.run(deleteSql, [id], function(err) {
+            if (err) {
+                console.error('删除学期失败:', err.message);
+                res.status(500).json({ error: '删除学期失败' });
+            } else if (this.changes === 0) {
+                res.status(404).json({ error: '学期不存在' });
+            } else {
+                res.json({ message: '学期删除成功' });
+            }
+        });
+    });
+});
+
+// ===========================================
+// 课程表管理API
+// ===========================================
+
+// 获取所有课程表（包括归档的）
+app.get('/api/admin/schedules', requireAuth, (req, res) => {
+    const { includeArchived } = req.query;
+    
+    let sql = `
+        SELECT s.*, t.name as teacher_name, sem.semester_name, a.username as archived_by_name
+        FROM schedules s
+        LEFT JOIN teachers t ON s.teacher_id = t.id
+        LEFT JOIN semester_config sem ON s.semester_id = sem.id
+        LEFT JOIN admins a ON s.archived_by = a.id
+    `;
+    
+    if (includeArchived !== 'true') {
+        sql += ' WHERE s.is_archived = FALSE';
+    }
+    
+    sql += ' ORDER BY s.created_at DESC';
+    
+    console.log('执行课程表查询SQL:', sql);
+    req.db.all(sql, [], (err, rows) => {
+        if (err) {
+            console.error('获取课程表列表失败:', err.message);
+            res.status(500).json({ error: '获取课程表列表失败' });
+        } else {
+            console.log('课程表查询结果:', rows);
+            res.json(rows || []);
+        }
+    });
+});
+
+// 归档课程表
+app.put('/api/admin/schedules/:id/archive', requireAuth, (req, res) => {
+    const { id } = req.params;
+    const { notes } = req.body;
+    const adminId = req.session.adminId;
+    
+    const sql = `
+        UPDATE schedules 
+        SET is_archived = TRUE, archived_at = CURRENT_TIMESTAMP, archived_by = ?, notes = ?
+        WHERE id = ? AND is_archived = FALSE
+    `;
+    
+    req.db.run(sql, [adminId, notes || null, id], function(err) {
+        if (err) {
+            console.error('归档课程表失败:', err.message);
+            res.status(500).json({ error: '归档课程表失败' });
+        } else if (this.changes === 0) {
+            res.status(404).json({ error: '课程表不存在或已归档' });
+        } else {
+            res.json({ message: '课程表已归档' });
+        }
+    });
+});
+
+// 恢复课程表
+app.put('/api/admin/schedules/:id/restore', requireAuth, (req, res) => {
+    const { id } = req.params;
+    
+    const sql = `
+        UPDATE schedules 
+        SET is_archived = FALSE, archived_at = NULL, archived_by = NULL, notes = NULL
+        WHERE id = ? AND is_archived = TRUE
+    `;
+    
+    req.db.run(sql, [id], function(err) {
+        if (err) {
+            console.error('恢复课程表失败:', err.message);
+            res.status(500).json({ error: '恢复课程表失败' });
+        } else if (this.changes === 0) {
+            res.status(404).json({ error: '课程表不存在或未归档' });
+        } else {
+            res.json({ message: '课程表已恢复' });
+        }
+    });
+});
+
+// 永久删除课程表
+app.delete('/api/admin/schedules/:id', requireAuth, (req, res) => {
+    const { id } = req.params;
+    
+    req.db.run('BEGIN TRANSACTION', (beginErr) => {
+        if (beginErr) {
+            return res.status(500).json({ error: '删除课程表失败' });
+        }
+        
+        // 先删除课程安排
+        req.db.run('DELETE FROM course_arrangements WHERE schedule_id = ?', [id], (err1) => {
+            if (err1) {
+                req.db.run('ROLLBACK');
+                console.error('删除课程安排失败:', err1.message);
+                return res.status(500).json({ error: '删除课程表失败' });
+            }
+            
+            // 删除操作历史
+            req.db.run('DELETE FROM operation_history WHERE schedule_id = ?', [id], (err2) => {
+                if (err2) {
+                    req.db.run('ROLLBACK');
+                    console.error('删除操作历史失败:', err2.message);
+                    return res.status(500).json({ error: '删除课程表失败' });
+                }
+                
+                // 删除课程表
+                req.db.run('DELETE FROM schedules WHERE id = ?', [id], function(err3) {
+                    if (err3) {
+                        req.db.run('ROLLBACK');
+                        console.error('删除课程表失败:', err3.message);
+                        res.status(500).json({ error: '删除课程表失败' });
+                    } else if (this.changes === 0) {
+                        req.db.run('ROLLBACK');
+                        res.status(404).json({ error: '课程表不存在' });
+                    } else {
+                        req.db.run('COMMIT', (commitErr) => {
+                            if (commitErr) {
+                                res.status(500).json({ error: '删除课程表失败' });
+                            } else {
+                                res.json({ message: '课程表已永久删除' });
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    });
+});
+
+// 创建新课程表
+app.post('/api/admin/schedules', requireAuth, (req, res) => {
+    const { teacherId, name, semesterId } = req.body;
+    
+    if (!teacherId || !name || !semesterId) {
+        return res.status(400).json({ error: '教师、课程表名称和学期不能为空' });
+    }
+    
+    const sql = `
+        INSERT INTO schedules (teacher_id, name, semester_id)
+        VALUES (?, ?, ?)
+    `;
+    
+    req.db.run(sql, [teacherId, name, semesterId], function(err) {
+        if (err) {
+            console.error('创建课程表失败:', err.message);
+            res.status(500).json({ error: '创建课程表失败' });
+        } else {
+            res.json({ message: '课程表创建成功', scheduleId: this.lastID });
         }
     });
 });

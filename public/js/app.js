@@ -73,6 +73,14 @@ class ScheduleApp {
             console.error('未处理的Promise拒绝:', event.reason);
         });
 
+        // 管理员按钮
+        const adminBtn = DOMUtils.$('#admin-btn');
+        if (adminBtn) {
+            adminBtn.addEventListener('click', () => {
+                window.open('/admin.html', '_blank');
+            });
+        }
+
         // 键盘快捷键
         document.addEventListener('keydown', (event) => {
             this.handleKeyboardShortcuts(event);

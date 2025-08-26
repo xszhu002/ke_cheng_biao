@@ -42,10 +42,15 @@ const createTables = [
         name VARCHAR(100) NOT NULL,
         semester_id INTEGER NOT NULL,
         is_active BOOLEAN DEFAULT TRUE,
+        is_archived BOOLEAN DEFAULT FALSE,
+        archived_at DATETIME,
+        archived_by INTEGER,
+        notes TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (teacher_id) REFERENCES teachers(id),
-        FOREIGN KEY (semester_id) REFERENCES semester_config(id)
+        FOREIGN KEY (semester_id) REFERENCES semester_config(id),
+        FOREIGN KEY (archived_by) REFERENCES admins(id)
     )`,
 
     // 课程安排表
@@ -74,6 +79,40 @@ const createTables = [
         new_data TEXT, -- JSON格式的新数据
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (schedule_id) REFERENCES schedules(id)
+    )`,
+
+    // 管理员表
+    `CREATE TABLE IF NOT EXISTS admins (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        email VARCHAR(100),
+        full_name VARCHAR(100),
+        is_active BOOLEAN DEFAULT TRUE,
+        last_login DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+
+    // 系统设置表
+    `CREATE TABLE IF NOT EXISTS system_settings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        setting_key VARCHAR(100) UNIQUE NOT NULL,
+        setting_value TEXT,
+        setting_type VARCHAR(20) DEFAULT 'string',
+        description TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+
+    // 管理员会话表
+    `CREATE TABLE IF NOT EXISTS admin_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id VARCHAR(255) UNIQUE NOT NULL,
+        admin_id INTEGER NOT NULL,
+        expires_at DATETIME NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (admin_id) REFERENCES admins(id)
     )`
 ];
 
@@ -108,7 +147,16 @@ const initData = [
         (1, 5, 6, '信息科技', '503', 'regular'),
         (1, 1, 7, '信息科技', '501', 'regular'),
         (1, 2, 7, '信息科技', '612', 'regular'),
-        (1, 3, 7, '信息科技', '610', 'regular')`
+        (1, 3, 7, '信息科技', '610', 'regular')`,
+
+    // 插入系统默认设置
+    `INSERT OR IGNORE INTO system_settings (setting_key, setting_value, setting_type, description) VALUES 
+        ('system_name', '课程表管理系统', 'string', '系统名称'),
+        ('school_name', '示例学校', 'string', '学校名称'),
+        ('time_slots', '["08:00-08:40", "08:50-09:30", "09:40-10:20", "10:30-11:10", "11:20-12:00", "14:00-14:40", "14:50-15:30", "15:40-16:20", "16:30-17:10"]', 'json', '时间段设置'),
+        ('session_timeout', '3600', 'number', '会话超时时间（秒）'),
+        ('default_password', 'admin123', 'string', '默认管理员密码'),
+        ('password_min_length', '6', 'number', '最小密码长度')`
 ];
 
 // 执行数据库初始化
