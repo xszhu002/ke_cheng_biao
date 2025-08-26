@@ -22,6 +22,7 @@ class ScheduleApp {
 
             // 初始化课程表管理器
             this.scheduleManager = new ScheduleManager();
+            window.scheduleManager = this.scheduleManager; // 设置为全局变量
             
             // 初始化拖拽管理器
             if (window.DragDropManager) {
@@ -241,6 +242,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // 初始化应用
         await window.app.init();
+        
+        // 添加任务表单事件监听器（已改为按钮onclick处理）
+        // DOMUtils.on('#task-form', 'submit', (e) => {
+        //     if (window.scheduleManager) {
+        //         window.scheduleManager.handleTaskFormSubmit(e);
+        //     }
+        // });
+        
+        // 全局任务提交处理函数
+        window.handleTaskSubmit = function(event) {
+            console.log('全局任务提交函数被调用');
+            console.log('window.scheduleManager 存在:', !!window.scheduleManager);
+            
+            if (event && event.preventDefault) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            if (window.scheduleManager && typeof window.scheduleManager.handleTaskFormSubmit === 'function') {
+                try {
+                    window.scheduleManager.handleTaskFormSubmit(event);
+                } catch (error) {
+                    console.error('调用 handleTaskFormSubmit 失败:', error);
+                    alert('保存任务失败: ' + error.message);
+                }
+            } else {
+                console.error('scheduleManager 未初始化或方法不存在');
+                console.log('window.scheduleManager:', window.scheduleManager);
+                alert('系统未完全加载，请刷新页面后重试');
+            }
+        };
         
         // 显示欢迎信息
         setTimeout(() => {

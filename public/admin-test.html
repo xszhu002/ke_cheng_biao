@@ -3,143 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理员测试页面</title>
+    <title>管理员登录测试</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background: #f5f5f5;
-        }
-        .test-container {
-            background: white;
+        .admin-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             padding: 20px;
-            border-radius: 8px;
-            max-width: 600px;
-            margin: 0 auto;
         }
-        .status {
-            background: #e9ecef;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 10px 0;
-            border-left: 4px solid #007bff;
+
+        .admin-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
         }
-        .error {
-            border-left-color: #dc3545;
-            background: #f8d7da;
+
+        .form-group {
+            margin-bottom: 20px;
         }
-        .success {
-            border-left-color: #28a745;
-            background: #d4edda;
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
         }
-        button {
-            background: #007bff;
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: white;
+        }
+
+        .admin-btn {
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            border-radius: 12px;
+            font-size: 16px;
             cursor: pointer;
-            margin: 5px;
-        }
-        button:hover {
-            background: #0056b3;
         }
     </style>
 </head>
 <body>
-    <div class="test-container">
-        <h1>管理员系统测试</h1>
-        <div id="status" class="status">准备测试...</div>
-        
-        <button onclick="testAPI()">测试API连接</button>
-        <button onclick="testDOMUtils()">测试DOMUtils</button>
-        <button onclick="testAdminCheck()">测试管理员检查</button>
-        
-        <div id="results"></div>
+    <div class="admin-container">
+        <div class="admin-card">
+            <h1>管理员登录测试</h1>
+            
+            <form id="test-login-form">
+                <div class="form-group">
+                    <label for="test-username">用户名</label>
+                    <input type="text" id="test-username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="test-password">密码</label>
+                    <input type="password" id="test-password" name="password" required>
+                </div>
+                <button type="submit" class="admin-btn">登录</button>
+            </form>
+            
+            <div id="test-result" style="margin-top: 20px;"></div>
+        </div>
     </div>
 
     <script>
-        function updateStatus(message, type = 'info') {
-            const status = document.getElementById('status');
-            status.textContent = message;
-            status.className = 'status';
-            if (type === 'error') status.className += ' error';
-            if (type === 'success') status.className += ' success';
-        }
-
-        function addResult(message) {
-            const results = document.getElementById('results');
-            const div = document.createElement('div');
-            div.className = 'status';
-            div.textContent = message;
-            results.appendChild(div);
-        }
-
-        async function testAPI() {
-            updateStatus('测试API连接...');
-            try {
-                const response = await fetch('/api/admin/check');
-                const data = await response.json();
-                updateStatus('API连接成功', 'success');
-                addResult('API响应: ' + JSON.stringify(data));
-            } catch (error) {
-                updateStatus('API连接失败: ' + error.message, 'error');
-                addResult('错误详情: ' + error.stack);
-            }
-        }
-
-        function testDOMUtils() {
-            updateStatus('测试DOMUtils...');
-            try {
-                // 测试基本选择器
-                const status = document.querySelector('#status');
-                if (!status) throw new Error('querySelector失败');
-                
-                // 测试显示隐藏
-                status.style.display = 'none';
-                setTimeout(() => {
-                    status.style.display = '';
-                    updateStatus('DOMUtils测试成功', 'success');
-                }, 500);
-                
-                addResult('DOM操作测试通过');
-            } catch (error) {
-                updateStatus('DOMUtils测试失败: ' + error.message, 'error');
-                addResult('错误详情: ' + error.stack);
-            }
-        }
-
-        async function testAdminCheck() {
-            updateStatus('测试完整管理员检查流程...');
-            try {
-                // 模拟AdminSystem的checkAdminStatus方法
-                console.log('正在检查管理员状态...');
-                const response = await fetch('/api/admin/check');
-                const data = await response.json();
-                console.log('管理员状态:', data);
-                
-                let message = '';
-                if (data.isLoggedIn) {
-                    message = '已登录状态';
-                } else if (!data.hasAdmin) {
-                    message = '需要创建管理员';
-                } else {
-                    message = '需要登录';
-                }
-                
-                updateStatus('管理员检查完成: ' + message, 'success');
-                addResult('状态: ' + JSON.stringify(data));
-                
-            } catch (error) {
-                updateStatus('管理员检查失败: ' + error.message, 'error');
-                addResult('错误详情: ' + error.stack);
-            }
-        }
-
-        // 页面加载时自动测试
+        console.log('测试页面加载');
+        
         document.addEventListener('DOMContentLoaded', () => {
-            updateStatus('页面加载完成，可以开始测试');
-            addResult('测试页面已准备就绪');
+            console.log('DOM加载完成');
+            
+            const form = document.getElementById('test-login-form');
+            const usernameInput = document.getElementById('test-username');
+            const passwordInput = document.getElementById('test-password');
+            const result = document.getElementById('test-result');
+            
+            // 测试输入框是否可用
+            usernameInput.addEventListener('input', (e) => {
+                console.log('用户名输入:', e.target.value);
+                result.innerHTML = '用户名输入: ' + e.target.value;
+            });
+            
+            passwordInput.addEventListener('input', (e) => {
+                console.log('密码输入:', e.target.value);
+                result.innerHTML = '密码输入: ' + '*'.repeat(e.target.value.length);
+            });
+            
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                console.log('表单提交', {
+                    username: usernameInput.value,
+                    password: passwordInput.value
+                });
+                result.innerHTML = `表单提交: ${usernameInput.value} / ${passwordInput.value}`;
+            });
+            
+            // 测试是否可以手动设置焦点
+            setTimeout(() => {
+                usernameInput.focus();
+                console.log('手动设置焦点到用户名输入框');
+            }, 1000);
         });
     </script>
 </body>

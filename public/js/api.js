@@ -534,13 +534,81 @@ async function batchApiCall(apiCalls, concurrency = 5) {
     return results;
 }
 
+/**
+ * 任务管理API
+ */
+const TaskAPI = {
+    /**
+     * 获取课程相关任务
+     */
+    async getCourseTask(scheduleId, weekday, timeSlot) {
+        return await apiClient.get(`/tasks/course/${scheduleId}/${weekday}/${timeSlot}`);
+    },
+
+    /**
+     * 获取教师任务
+     */
+    async getTeacherTasks(teacherId, filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.date) params.append('date', filters.date);
+        if (filters.status) params.append('status', filters.status);
+        if (filters.type) params.append('type', filters.type);
+        
+        const url = `/tasks/teacher/${teacherId}${params.toString() ? '?' + params.toString() : ''}`;
+        return await apiClient.get(url);
+    },
+
+    /**
+     * 创建任务
+     */
+    async create(taskData) {
+        return await apiClient.post('/tasks', taskData);
+    },
+
+    /**
+     * 更新任务
+     */
+    async update(id, taskData) {
+        return await apiClient.put(`/tasks/${id}`, taskData);
+    },
+
+    /**
+     * 删除任务
+     */
+    async delete(id) {
+        return await apiClient.delete(`/tasks/${id}`);
+    },
+
+    /**
+     * 标记任务完成
+     */
+    async complete(id) {
+        return await this.update(id, { status: 'completed' });
+    },
+
+    /**
+     * 获取任务统计
+     */
+    async getStats(teacherId, date) {
+        const tasks = await this.getTeacherTasks(teacherId, { date });
+        const stats = {
+            total: tasks.length,
+            pending: tasks.filter(t => t.status === 'pending').length,
+            completed: tasks.filter(t => t.status === 'completed').length,
+            high: tasks.filter(t => t.priority_level === 'high').length
+        };
+        return stats;
+    }
+};
+
 // 导出API对象
 window.API = {
     Teacher: TeacherAPI,
     Schedule: ScheduleAPI,
     Course: CourseAPI,
     SpecialCare: SpecialCareAPI,
-    Calendar: CalendarAPI
+    Calendar: CalendarAPI,
+    Task: TaskAPI
 };
 
 // 导出工具函数

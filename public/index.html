@@ -325,6 +325,92 @@
         </div>
     </div>
 
+    <!-- 任务详情模态框 -->
+    <div id="task-detail-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">任务管理</h3>
+                <button class="modal-close" onclick="this.closest('.modal-overlay').style.display='none'">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="task-list-container">
+                    <div class="task-list-header">
+                        <h4 id="task-course-info"></h4>
+                        <button class="btn btn-primary" onclick="scheduleManager.showAddTaskModal()">添加任务</button>
+                    </div>
+                    <div id="task-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加/编辑任务模态框 -->
+    <div id="add-task-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="task-modal-title">添加任务</h3>
+                <button class="modal-close" onclick="this.closest('.modal-overlay').style.display='none'">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="task-form">
+                    <input type="hidden" id="task-id" />
+                    <input type="hidden" id="task-schedule-id" />
+                    <input type="hidden" id="task-weekday" />
+                    <input type="hidden" id="task-time-slot" />
+                    
+                    <div class="form-group">
+                        <label for="task-title">任务标题 *</label>
+                        <input type="text" id="task-title" required maxlength="100" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="task-description">任务描述</label>
+                        <textarea id="task-description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="task-type">任务类型</label>
+                            <select id="task-type">
+                                <option value="preparation">备课</option>
+                                <option value="grading">批改</option>
+                                <option value="meeting">会议</option>
+                                <option value="assessment">测验</option>
+                                <option value="general">其他</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="task-priority">优先级</label>
+                            <select id="task-priority">
+                                <option value="3">低</option>
+                                <option value="2" selected>中</option>
+                                <option value="1">高</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="task-due-date">截止日期</label>
+                            <input type="date" id="task-due-date" />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="task-due-time">截止时间</label>
+                            <input type="time" id="task-due-time" />
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="this.closest('.modal-overlay').style.display='none'">取消</button>
+                        <button type="button" class="btn btn-primary" onclick="handleTaskSubmit(event)">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- 加载指示器 -->
     <div id="loading-indicator" class="loading-indicator" style="display: none;">
         <div class="spinner"></div>

@@ -16,7 +16,7 @@
             justify-content: center;
             padding: 20px;
             position: relative;
-            z-index: 1;
+            z-index: 100; /* 确保登录容器在最上层 */
         }
 
         .admin-container::before {
@@ -34,7 +34,7 @@
 
         .admin-card {
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
+            /* backdrop-filter: blur(20px); 暂时禁用以测试 */
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 20px;
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
@@ -43,6 +43,8 @@
             max-width: 420px;
             text-align: center;
             transition: transform 0.3s ease;
+            position: relative;
+            z-index: 10;
         }
 
         .admin-card:hover {
@@ -88,6 +90,9 @@
             transition: all 0.3s ease;
             box-sizing: border-box;
             background: rgba(255, 255, 255, 0.8);
+            position: relative;
+            z-index: 20;
+            pointer-events: auto;
         }
 
         .form-group input:focus {
@@ -142,6 +147,11 @@
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             position: relative;
             z-index: 1;
+            pointer-events: none; /* 当隐藏时不拦截鼠标事件 */
+        }
+        
+        .dashboard.active {
+            pointer-events: auto; /* 当激活时恢复鼠标事件 */
         }
 
         .dashboard::before {
@@ -1385,6 +1395,25 @@
                 console.log('显示登录表单...');
                 const loginForm = document.getElementById('login-form');
                 const setupForm = document.getElementById('setup-form');
+                const dashboard = document.getElementById('admin-dashboard');
+                const adminLogin = document.getElementById('admin-login');
+                
+                // 确保dashboard完全隐藏且不拦截事件
+                if (dashboard) {
+                    dashboard.style.display = 'none';
+                    dashboard.style.pointerEvents = 'none';
+                    dashboard.style.zIndex = '-1';
+                    dashboard.classList.remove('active'); // 移除active类禁用点击事件
+                    console.log('后台界面已隐藏');
+                }
+                
+                // 确保登录容器显示并可交互
+                if (adminLogin) {
+                    adminLogin.style.display = 'flex';
+                    adminLogin.style.pointerEvents = 'auto';
+                    adminLogin.style.zIndex = '100';
+                    console.log('登录容器已显示');
+                }
                 
                 if (loginForm) {
                     loginForm.style.display = 'block';
@@ -1446,6 +1475,7 @@
                 }
                 if (dashboardContainer) {
                     dashboardContainer.style.display = 'block';
+                    dashboardContainer.classList.add('active'); // 添加active类启用点击事件
                     console.log('后台容器已显示');
                 }
                 
@@ -1497,6 +1527,21 @@
             bindEvents() {
                 console.log('绑定事件...');
                 
+                // 定义简化的事件处理函数
+                const forceInputFocus = (input, name) => {
+                    // 只处理点击事件，避免focus事件的无限循环
+                    ['click', 'mousedown'].forEach(eventType => {
+                        input.addEventListener(eventType, (e) => {
+                            e.stopPropagation();
+                            if (eventType === 'click') {
+                                setTimeout(() => {
+                                    input.focus();
+                                }, 0);
+                            }
+                        }, true); // 使用捕获阶段
+                    });
+                };
+                
                 // 登录表单
                 const loginForm = document.getElementById('login-form');
                 if (loginForm) {
@@ -1504,7 +1549,34 @@
                         e.preventDefault();
                         this.handleLogin();
                     });
+                    
+                    // 表单点击处理（确保输入框可以获得焦点）
+                    loginForm.addEventListener('click', (e) => {
+                        if (e.target.tagName === 'INPUT') {
+                            e.target.focus();
+                        }
+                    });
+                    
                     console.log('登录表单事件已绑定');
+                    
+                    // 调试输入框状态
+                    const usernameInput = document.getElementById('username');
+                    const passwordInput = document.getElementById('password');
+                    
+                    if (usernameInput) {
+                        // 应用事件处理
+                        forceInputFocus(usernameInput, '用户名输入框');
+                        
+                        // 自动设置焦点
+                        setTimeout(() => {
+                            usernameInput.focus();
+                        }, 500);
+                    }
+                    
+                    if (passwordInput) {
+                        // 应用事件处理
+                        forceInputFocus(passwordInput, '密码输入框');
+                    }
                 }
 
                 // 设置表单
@@ -2621,6 +2693,57 @@
             try {
                 window.adminSystem = new AdminSystem();
                 console.log('管理员系统创建成功');
+                
+                // 调试功能：强制显示登录表单
+                window.forceShowLogin = () => {
+                    console.log('强制显示登录表单...');
+                    document.getElementById('admin-login').style.display = 'flex';
+                    document.getElementById('dashboard').style.display = 'none';
+                    window.adminSystem.showLoginForm();
+                };
+                
+                // 调试功能：退出登录
+                window.forceLogout = async () => {
+                    try {
+                        await fetch('/api/admin/logout', { method: 'POST' });
+                        console.log('退出登录成功');
+                        location.reload();
+                    } catch (error) {
+                        console.error('退出登录失败:', error);
+                    }
+                };
+                
+                console.log('调试功能已添加: window.forceShowLogin() 和 window.forceLogout()');
+                
+                // 添加输入框修复功能
+                window.fixInputs = () => {
+                    const usernameInput = document.getElementById('username');
+                    const passwordInput = document.getElementById('password');
+                    
+                    [usernameInput, passwordInput].forEach(input => {
+                        if (input) {
+                            input.style.position = 'relative';
+                            input.style.zIndex = '1000';
+                            input.style.pointerEvents = 'auto';
+                            
+                            // 移除所有事件监听器然后重新添加
+                            const newInput = input.cloneNode(true);
+                            input.parentNode.replaceChild(newInput, input);
+                            
+                            newInput.addEventListener('click', () => {
+                                newInput.focus();
+                                console.log('输入框获得焦点:', newInput.id);
+                            });
+                        }
+                    });
+                    console.log('输入框已修复');
+                };
+                
+                // 全局鼠标事件监听（已禁用以减少日志输出）
+                // document.addEventListener('click', (e) => {
+                //     console.log('全局点击事件 - 目标元素:', e.target);
+                //     console.log('事件路径:', e.composedPath());
+                // }, true);
             } catch (error) {
                 console.error('管理员系统初始化失败:', error);
                 alert('管理员系统初始化失败: ' + error.message);

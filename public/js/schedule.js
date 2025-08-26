@@ -193,6 +193,9 @@ class ScheduleManager {
         this.specialCare.forEach(care => {
             this.renderSpecialCareBlock(care);
         });
+        
+        // 为空时间槽加载任务图标
+        this.loadEmptySlotTaskIcons();
     }
 
     /**
@@ -226,6 +229,469 @@ class ScheduleManager {
     }
 
     /**
+     * 加载课程相关任务图标
+     */
+    async loadCourseTaskIcons(course, taskIconsContainer) {
+        if (!this.currentSchedule) return;
+
+        try {
+            const tasks = await API.Task.getCourseTask(
+                this.currentSchedule.id, 
+                course.weekday, 
+                course.time_slot
+            );
+
+            // 清空现有图标
+            taskIconsContainer.innerHTML = '';
+
+            if (tasks.length === 0) return;
+
+                    // 直接为每个任务创建图标，显示任务标题
+        tasks.forEach(task => {
+            const icon = this.createTaskIcon(task.task_type || 'general', 1, task.title);
+            
+            // 添加点击事件
+            DOMUtils.on(icon, 'click', (e) => {
+                e.stopPropagation();
+                this.showTaskDetails(
+                    this.currentSchedule.id,
+                    course.weekday,
+                    course.time_slot,
+                    course.course_name
+                );
+            });
+            
+            taskIconsContainer.appendChild(icon);
+        });
+
+            // 如果有高优先级任务，添加提醒样式
+            const hasHighPriority = tasks.some(task => task.priority_level === 'high');
+            if (hasHighPriority) {
+                taskIconsContainer.classList.add('has-urgent');
+            }
+
+        } catch (error) {
+            console.error('加载课程任务失败:', error);
+        }
+    }
+
+
+
+    /**
+     * 创建任务图标
+     */
+    createTaskIcon(type, count, title) {
+        const iconMap = {
+            preparation: '📖',  // 备课
+            grading: '✍️',     // 批改
+            meeting: '👥',     // 会议
+            assessment: '📝',  // 测评
+            general: '📋'      // 其他
+        };
+
+        const icon = DOMUtils.createElement('span', {
+            className: `task-icon task-${type}`,
+            title: title || this.getTaskTypeLabel(type)  // 优先显示任务标题，没有标题时显示任务类型
+        });
+
+        icon.textContent = iconMap[type] || iconMap.general;
+        
+        if (count > 1) {
+            const badge = DOMUtils.createElement('span', {
+                className: 'task-count'
+            }, count.toString());
+            icon.appendChild(badge);
+        }
+
+        // 点击事件将在loadCourseTaskIcons中设置
+        icon.dataset.taskType = type;
+
+        return icon;
+    }
+
+    /**
+     * 获取任务类型标签
+     */
+    getTaskTypeLabel(type) {
+        const labels = {
+            preparation: '备课任务',
+            grading: '批改任务',
+            meeting: '会议安排',
+            assessment: '测评任务',
+            general: '其他任务'
+        };
+        return labels[type] || labels.general;
+    }
+
+    /**
+     * 显示任务详情模态框
+     */
+    async showTaskDetails(scheduleId, weekday, timeSlot, courseName) {
+        this.currentTaskContext = { scheduleId, weekday, timeSlot, courseName };
+        
+        // 设置课程信息
+        const courseInfoEl = DOMUtils.$('#task-course-info');
+        const weekdayName = ['', '星期一', '星期二', '星期三', '星期四', '星期五'][weekday];
+        courseInfoEl.textContent = `${courseName} (${weekdayName} 第${timeSlot}节)`;
+        
+        // 加载任务列表
+        await this.loadTaskList();
+        
+        // 显示模态框
+        DOMUtils.$('#task-detail-modal').style.display = 'flex';
+    }
+
+    /**
+     * 加载任务列表
+     */
+    async loadTaskList() {
+        if (!this.currentTaskContext) return;
+        
+        const { scheduleId, weekday, timeSlot } = this.currentTaskContext;
+        const taskListEl = DOMUtils.$('#task-list');
+        
+        try {
+            const tasks = await API.Task.getCourseTask(scheduleId, weekday, timeSlot);
+            
+            if (tasks.length === 0) {
+                taskListEl.innerHTML = `
+                    <div class="empty-tasks">
+                        <div class="empty-icon">📝</div>
+                        <p>暂无任务</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            taskListEl.innerHTML = tasks.map(task => this.renderTaskItem(task)).join('');
+            
+        } catch (error) {
+            console.error('加载任务列表失败:', error);
+            taskListEl.innerHTML = '<p class="text-danger">加载任务失败</p>';
+        }
+    }
+
+    /**
+     * 渲染任务项
+     */
+    renderTaskItem(task) {
+        const priorityClass = task.priority_level === 'high' ? 'high-priority' : 
+                            task.priority_level === 'medium' ? 'medium-priority' : 'low-priority';
+        const completedClass = task.status === 'completed' ? 'completed' : '';
+        const typeLabel = this.getTaskTypeLabel(task.task_type);
+        
+        return `
+            <div class="task-item ${priorityClass} ${completedClass}" data-task-id="${task.id}">
+                <input type="checkbox" class="task-checkbox" 
+                       ${task.status === 'completed' ? 'checked' : ''} 
+                       onchange="scheduleManager.toggleTaskStatus(${task.id}, this.checked)">
+                <div class="task-content">
+                    <div class="task-title">${task.title}</div>
+                    <div class="task-meta">
+                        <span class="task-type-badge task-type-${task.task_type}">${typeLabel}</span>
+                        ${task.due_date ? `<span>📅 ${task.due_date}</span>` : ''}
+                        ${task.due_time ? `<span>⏰ ${task.due_time}</span>` : ''}
+                        <span>优先级: ${task.priority_level === 'high' ? '高' : task.priority_level === 'medium' ? '中' : '低'}</span>
+                    </div>
+                    ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
+                </div>
+                <div class="task-actions">
+                    <button class="task-action-btn" onclick="scheduleManager.editTask(${task.id})" title="编辑">✏️</button>
+                    <button class="task-action-btn" onclick="scheduleManager.deleteTask(${task.id})" title="删除">🗑️</button>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * 显示添加任务模态框
+     */
+    showAddTaskModal(scheduleId = null, weekday = null, timeSlot = null) {
+        console.log('showAddTaskModal 被调用:', { scheduleId, weekday, timeSlot });
+        console.log('当前教师:', this.currentTeacher);
+        
+        // 如果没有传参数，使用当前任务上下文
+        if (!scheduleId && this.currentTaskContext) {
+            scheduleId = this.currentTaskContext.scheduleId;
+            weekday = this.currentTaskContext.weekday;
+            timeSlot = this.currentTaskContext.timeSlot;
+        }
+        
+        // 如果仍然没有参数，不能添加任务
+        if (!scheduleId || !weekday || !timeSlot) {
+            alert('请先选择课程时间段');
+            return;
+        }
+        
+        // 设置表单数据
+        DOMUtils.$('#task-modal-title').textContent = '添加任务';
+        DOMUtils.$('#task-id').value = '';
+        DOMUtils.$('#task-schedule-id').value = scheduleId;
+        DOMUtils.$('#task-weekday').value = weekday;
+        DOMUtils.$('#task-time-slot').value = timeSlot;
+        
+        // 清空表单
+        DOMUtils.$('#task-title').value = '';
+        DOMUtils.$('#task-description').value = '';
+        DOMUtils.$('#task-type').value = 'general';
+        DOMUtils.$('#task-priority').value = '2';
+        DOMUtils.$('#task-due-date').value = '';
+        DOMUtils.$('#task-due-time').value = '';
+        
+        // 显示模态框
+        DOMUtils.$('#add-task-modal').style.display = 'flex';
+    }
+
+    /**
+     * 编辑任务
+     */
+    async editTask(taskId) {
+        try {
+            // 获取任务详情
+            const tasks = await API.Task.getCourseTask(
+                this.currentTaskContext.scheduleId,
+                this.currentTaskContext.weekday,
+                this.currentTaskContext.timeSlot
+            );
+            const task = tasks.find(t => t.id === taskId);
+            
+            if (!task) {
+                alert('任务不存在');
+                return;
+            }
+            
+            // 填充表单
+            DOMUtils.$('#task-modal-title').textContent = '编辑任务';
+            DOMUtils.$('#task-id').value = task.id;
+            DOMUtils.$('#task-schedule-id').value = task.schedule_id;
+            DOMUtils.$('#task-weekday').value = task.weekday;
+            DOMUtils.$('#task-time-slot').value = task.time_slot;
+            DOMUtils.$('#task-title').value = task.title;
+            DOMUtils.$('#task-description').value = task.description || '';
+            DOMUtils.$('#task-type').value = task.task_type;
+            DOMUtils.$('#task-priority').value = task.priority;
+            DOMUtils.$('#task-due-date').value = task.due_date || '';
+            DOMUtils.$('#task-due-time').value = task.due_time || '';
+            
+            // 显示模态框
+            DOMUtils.$('#add-task-modal').style.display = 'flex';
+            
+        } catch (error) {
+            console.error('获取任务详情失败:', error);
+            alert('获取任务详情失败');
+        }
+    }
+
+    /**
+     * 删除任务
+     */
+    async deleteTask(taskId) {
+        if (!confirm('确定要删除这个任务吗？')) return;
+        
+        try {
+            await API.Task.delete(taskId);
+            await this.loadTaskList();
+            
+            // 更新对应时间槽的任务图标
+            if (this.currentTaskContext) {
+                await this.updateTaskIconsForSlot(
+                    this.currentTaskContext.weekday,
+                    this.currentTaskContext.timeSlot
+                );
+            }
+        } catch (error) {
+            console.error('删除任务失败:', error);
+            alert('删除任务失败');
+        }
+    }
+
+    /**
+     * 切换任务状态
+     */
+    async toggleTaskStatus(taskId, completed) {
+        try {
+            await API.Task.update(taskId, {
+                status: completed ? 'completed' : 'pending'
+            });
+            await this.loadTaskList();
+            
+            // 更新对应时间槽的任务图标
+            if (this.currentTaskContext) {
+                await this.updateTaskIconsForSlot(
+                    this.currentTaskContext.weekday,
+                    this.currentTaskContext.timeSlot
+                );
+            }
+        } catch (error) {
+            console.error('更新任务状态失败:', error);
+            alert('更新任务状态失败');
+        }
+    }
+
+    /**
+     * 处理任务表单提交
+     */
+    async handleTaskFormSubmit(e) {
+        console.log('任务表单提交事件触发');
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const taskData = {
+            teacherId: this.currentTeacher?.id,
+            scheduleId: parseInt(DOMUtils.$('#task-schedule-id').value),
+            title: DOMUtils.$('#task-title').value.trim(),
+            description: DOMUtils.$('#task-description').value.trim(),
+            taskType: DOMUtils.$('#task-type').value,
+            priority: parseInt(DOMUtils.$('#task-priority').value),
+            dueDate: DOMUtils.$('#task-due-date').value || null,
+            dueTime: DOMUtils.$('#task-due-time').value || null,
+            weekday: parseInt(DOMUtils.$('#task-weekday').value),
+            timeSlot: parseInt(DOMUtils.$('#task-time-slot').value)
+        };
+        
+        console.log('任务提交数据:', taskData);
+        
+        if (!taskData.title) {
+            alert('请输入任务标题');
+            return;
+        }
+        
+        try {
+            const taskId = DOMUtils.$('#task-id').value;
+            
+            if (taskId) {
+                // 更新任务
+                await API.Task.update(parseInt(taskId), taskData);
+            } else {
+                // 创建新任务
+                await API.Task.create(taskData);
+            }
+            
+            // 关闭模态框
+            DOMUtils.$('#add-task-modal').style.display = 'none';
+            
+            // 刷新任务列表和课程表
+            if (this.currentTaskContext) {
+                await this.loadTaskList();
+            }
+            await this.refreshCurrentSchedule();
+            
+            // 立即更新对应时间槽的任务图标
+            await this.updateTaskIconsForSlot(taskData.weekday, taskData.timeSlot);
+            
+        } catch (error) {
+            console.error('保存任务失败:', error);
+            alert('保存任务失败');
+        }
+    }
+
+    /**
+     * 为空时间槽加载任务图标
+     */
+    async loadEmptySlotTaskIcons() {
+        if (!this.currentSchedule) return;
+        
+        // 查找所有空的时间槽
+        const emptySlots = DOMUtils.$$('.time-slot.empty');
+        
+        for (const slot of emptySlots) {
+            const weekday = parseInt(slot.dataset.weekday);
+            const timeSlot = parseInt(slot.dataset.timeSlot);
+            
+            // 跳过第9个时间段（特需托管）
+            if (timeSlot === 9) continue;
+            
+            const taskIconsContainer = slot.querySelector('.task-icons.empty-slot-tasks');
+            if (taskIconsContainer) {
+                await this.loadTaskIconsForSlot(weekday, timeSlot, taskIconsContainer);
+            }
+        }
+    }
+    
+    /**
+     * 为指定时间槽加载任务图标
+     */
+    async loadTaskIconsForSlot(weekday, timeSlot, taskIconsContainer) {
+        try {
+            const tasks = await API.Task.getCourseTask(
+                this.currentSchedule.id,
+                weekday,
+                timeSlot
+            );
+            
+            // 清空现有图标
+            taskIconsContainer.innerHTML = '';
+            
+            if (tasks.length === 0) return;
+            
+            // 直接为每个任务创建图标，显示任务标题
+            tasks.forEach(task => {
+                const icon = this.createTaskIcon(task.task_type || 'general', 1, task.title);
+                
+                // 添加点击事件
+                DOMUtils.on(icon, 'click', (e) => {
+                    e.stopPropagation();
+                    this.showTaskDetails(
+                        this.currentSchedule.id,
+                        weekday,
+                        timeSlot,
+                        '空闲时间'
+                    );
+                });
+                
+                taskIconsContainer.appendChild(icon);
+            });
+            
+            // 如果有高优先级任务，添加提醒样式
+            const hasHighPriority = tasks.some(task => task.priority_level === 'high');
+            if (hasHighPriority) {
+                taskIconsContainer.classList.add('has-urgent');
+            }
+            
+        } catch (error) {
+            console.error('加载空时间槽任务失败:', error);
+        }
+    }
+
+    /**
+     * 更新指定时间槽的任务图标
+     */
+    async updateTaskIconsForSlot(weekday, timeSlot) {
+        // 查找对应的时间槽
+        const slot = DOMUtils.$(`.time-slot[data-weekday="${weekday}"][data-time-slot="${timeSlot}"]`);
+        if (!slot) return;
+        
+        // 如果是空时间槽，更新空时间槽的任务图标
+        if (slot.classList.contains('empty')) {
+            const taskIconsContainer = slot.querySelector('.task-icons.empty-slot-tasks');
+            if (taskIconsContainer) {
+                await this.loadTaskIconsForSlot(weekday, timeSlot, taskIconsContainer);
+            }
+        } else {
+            // 如果有课程，重新加载课程的任务图标
+            const courseBlock = slot.querySelector('.course-block');
+            const taskIconsContainer = courseBlock?.querySelector('.task-icons:not(.empty-slot-tasks)');
+            if (taskIconsContainer && courseBlock) {
+                const course = {
+                    weekday: weekday,
+                    time_slot: timeSlot,
+                    course_name: courseBlock.querySelector('.course-name')?.textContent || '课程'
+                };
+                await this.loadCourseTaskIcons(course, taskIconsContainer);
+            }
+        }
+    }
+
+    /**
+     * 刷新当前课程表
+     */
+    async refreshCurrentSchedule() {
+        if (this.currentSchedule) {
+            await this.loadWeekSchedule(this.currentWeek);
+        }
+    }
+
+    /**
      * 清空课程表
      */
     clearScheduleTable() {
@@ -234,11 +700,49 @@ class ScheduleManager {
             block.remove();
         });
         
-        // 重置时间段状态
+        // 重置时间段状态并添加点击事件
         const timeSlots = DOMUtils.$$('.time-slot');
-        timeSlots.forEach(slot => {
+        console.log('clearScheduleTable: 找到时间槽数量:', timeSlots.length);
+        
+        timeSlots.forEach((slot, index) => {
             slot.classList.remove('has-course');
             slot.classList.add('empty');
+            
+            console.log(`处理时间槽 ${index}:`, {
+                weekday: slot.dataset.weekday,
+                timeSlot: slot.dataset.timeSlot,
+                classList: Array.from(slot.classList)
+            });
+            
+            // 移除之前的事件监听器
+            const newSlot = slot.cloneNode(true);
+            slot.parentNode.replaceChild(newSlot, slot);
+            
+            // 为空时间槽添加任务图标容器
+            const taskIcons = DOMUtils.createElement('div', {
+                className: 'task-icons empty-slot-tasks'
+            });
+            newSlot.appendChild(taskIcons);
+            
+            // 为空时间槽添加点击事件，允许添加任务
+            console.log('为时间槽添加点击事件:', { weekday: newSlot.dataset.weekday, timeSlot: newSlot.dataset.timeSlot });
+            
+            DOMUtils.on(newSlot, 'click', (e) => {
+                console.log('时间槽被点击:', newSlot, '是否为空:', newSlot.classList.contains('empty'));
+                
+                if (newSlot.classList.contains('empty')) {
+                    const weekday = parseInt(newSlot.dataset.weekday);
+                    const timeSlot = parseInt(newSlot.dataset.timeSlot);
+                    
+                    console.log('空单元格被点击:', { weekday, timeSlot, scheduleId: this.currentSchedule?.id });
+                    
+                    this.showAddTaskModal(
+                        this.currentSchedule.id,
+                        weekday,
+                        timeSlot
+                    );
+                }
+            });
         });
     }
 
@@ -273,6 +777,11 @@ class ScheduleManager {
             className: 'course-classroom'
         }, course.classroom || '');
 
+        // 任务图标容器
+        const taskIcons = DOMUtils.createElement('div', {
+            className: 'task-icons'
+        });
+
         // 在编辑模式下添加删除按钮
         if (isEditMode) {
             const deleteBtn = DOMUtils.createElement('div', {
@@ -291,6 +800,15 @@ class ScheduleManager {
         courseBlock.appendChild(courseName);
         if (course.classroom) {
             courseBlock.appendChild(courseClassroom);
+        }
+        courseBlock.appendChild(taskIcons);
+
+        // 异步加载任务图标
+        this.loadCourseTaskIcons(course, taskIcons);
+
+        // 清理时间槽中的现有内容（比如空单元格的任务图标容器）
+        while (timeSlot.firstChild) {
+            timeSlot.removeChild(timeSlot.firstChild);
         }
 
         timeSlot.appendChild(courseBlock);
@@ -339,6 +857,11 @@ class ScheduleManager {
 
         careBlock.appendChild(careName);
         careBlock.appendChild(careDate2);
+
+        // 清理时间槽中的现有内容（比如空单元格的任务图标容器）
+        while (timeSlot.firstChild) {
+            timeSlot.removeChild(timeSlot.firstChild);
+        }
 
         timeSlot.appendChild(careBlock);
         timeSlot.classList.remove('empty');

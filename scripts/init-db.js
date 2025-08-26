@@ -2,7 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
 // 数据库文件路径
-const dbPath = path.join(__dirname, '../database/schedule.db');
+const dbPath = path.join(__dirname, '../schedule.db');
 
 // 创建数据库连接
 const db = new sqlite3.Database(dbPath, (err) => {
@@ -113,6 +113,42 @@ const createTables = [
         expires_at DATETIME NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (admin_id) REFERENCES admins(id)
+    )`,
+
+    // 任务表
+    `CREATE TABLE IF NOT EXISTS tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        teacher_id INTEGER,
+        schedule_id INTEGER,
+        course_id INTEGER NULL,
+        title VARCHAR(100) NOT NULL,
+        description TEXT,
+        task_type VARCHAR(20) DEFAULT 'general',
+        priority INTEGER DEFAULT 1,
+        status VARCHAR(20) DEFAULT 'pending',
+        due_date DATE,
+        due_time TIME,
+        specific_date DATE NULL,
+        weekday INTEGER NULL,
+        time_slot INTEGER NULL,
+        is_recurring BOOLEAN DEFAULT FALSE,
+        recurrence_pattern VARCHAR(50),
+        completed_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (teacher_id) REFERENCES teachers(id),
+        FOREIGN KEY (schedule_id) REFERENCES schedules(id),
+        FOREIGN KEY (course_id) REFERENCES course_arrangements(id)
+    )`,
+
+    // 任务提醒表
+    `CREATE TABLE IF NOT EXISTS task_reminders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        task_id INTEGER,
+        reminder_time DATETIME,
+        is_sent BOOLEAN DEFAULT FALSE,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
     )`
 ];
 
@@ -156,19 +192,32 @@ const initData = [
         ('time_slots', '["08:00-08:40", "08:50-09:30", "09:40-10:20", "10:30-11:10", "11:20-12:00", "14:00-14:40", "14:50-15:30", "15:40-16:20", "16:30-17:10"]', 'json', '时间段设置'),
         ('session_timeout', '3600', 'number', '会话超时时间（秒）'),
         ('default_password', 'admin123', 'string', '默认管理员密码'),
-        ('password_min_length', '6', 'number', '最小密码长度')`
+        ('password_min_length', '6', 'number', '最小密码长度')`,
+
+    // 插入示例任务数据
+    `INSERT OR IGNORE INTO tasks (id, teacher_id, schedule_id, title, description, task_type, priority, status, weekday, time_slot, due_date) VALUES 
+        (1, 1, 1, '备课', '准备信息科技课程内容', 'preparation', 2, 'pending', 1, 3, '2025-08-26'),
+        (2, 1, 1, '作业批改', '批改上节课的练习', 'grading', 1, 'pending', 2, 3, '2025-08-26'),
+        (3, 2, 2, '家长会准备', '准备家长会材料', 'meeting', 3, 'pending', 2, 3, '2025-08-27'),
+        (4, 2, 2, '课件制作', '制作PPT课件', 'preparation', 2, 'completed', 3, 1, '2025-08-25'),
+        (5, 3, 3, '测验准备', '准备周测试卷', 'assessment', 3, 'pending', 4, 2, '2025-08-28')`
 ];
 
 // 执行数据库初始化
 async function initDatabase() {
     try {
         // 创建表结构
-        for (const sql of createTables) {
+        console.log(`开始创建 ${createTables.length} 个表`);
+        for (let i = 0; i < createTables.length; i++) {
+            const sql = createTables[i];
+            console.log(`创建表 ${i + 1}/${createTables.length}:`, sql.substring(0, 50) + '...');
             await new Promise((resolve, reject) => {
                 db.run(sql, (err) => {
                     if (err) {
+                        console.error(`创建表 ${i + 1} 失败:`, err.message);
                         reject(err);
                     } else {
+                        console.log(`表 ${i + 1} 创建成功`);
                         resolve();
                     }
                 });

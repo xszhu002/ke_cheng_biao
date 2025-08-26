@@ -1426,6 +1426,224 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: '服务器内部错误' });
 });
 
+// ===================== 任务管理 API =====================
+
+// 获取课程相关任务
+app.get('/api/tasks/course/:scheduleId/:weekday/:timeSlot', (req, res) => {
+    const { scheduleId, weekday, timeSlot } = req.params;
+    
+    const sql = `
+        SELECT t.*, 
+               CASE 
+                   WHEN t.priority = 1 THEN 'high'
+                   WHEN t.priority = 2 THEN 'medium'
+                   ELSE 'low'
+               END as priority_level
+        FROM tasks t
+        WHERE t.schedule_id = ? 
+          AND (t.weekday = ? AND t.time_slot = ?)
+          AND t.status != 'completed'
+        ORDER BY t.priority, t.due_date
+    `;
+    
+    req.db.all(sql, [scheduleId, weekday, timeSlot], (err, rows) => {
+        if (err) {
+            console.error('获取课程任务失败:', err.message);
+            res.status(500).json({ error: '获取任务失败' });
+        } else {
+            res.json(rows || []);
+        }
+    });
+});
+
+// 获取教师的所有任务
+app.get('/api/tasks/teacher/:teacherId', (req, res) => {
+    const { teacherId } = req.params;
+    const { date, status, type } = req.query;
+    
+    let sql = `
+        SELECT t.*, s.name as schedule_name,
+               CASE 
+                   WHEN t.priority = 1 THEN 'high'
+                   WHEN t.priority = 2 THEN 'medium'
+                   ELSE 'low'
+               END as priority_level
+        FROM tasks t
+        LEFT JOIN schedules s ON t.schedule_id = s.id
+        WHERE t.teacher_id = ?
+    `;
+    
+    const params = [teacherId];
+    
+    if (date) {
+        sql += ' AND DATE(t.due_date) = ?';
+        params.push(date);
+    }
+    
+    if (status) {
+        sql += ' AND t.status = ?';
+        params.push(status);
+    }
+    
+    if (type) {
+        sql += ' AND t.task_type = ?';
+        params.push(type);
+    }
+    
+    sql += ' ORDER BY t.priority, t.due_date, t.created_at';
+    
+    req.db.all(sql, params, (err, rows) => {
+        if (err) {
+            console.error('获取教师任务失败:', err.message);
+            res.status(500).json({ error: '获取任务失败' });
+        } else {
+            res.json(rows || []);
+        }
+    });
+});
+
+// 创建任务
+app.post('/api/tasks', (req, res) => {
+    console.log('收到创建任务请求:', req.body);
+    
+    const {
+        teacherId, scheduleId, courseId, title, description,
+        taskType, priority, dueDate, dueTime, specificDate,
+        weekday, timeSlot, isRecurring, recurrencePattern
+    } = req.body;
+    
+    console.log('解析的参数:', { teacherId, scheduleId, title, weekday, timeSlot });
+    
+    if (!teacherId || !scheduleId || !title) {
+        console.log('缺少必要参数 - teacherId:', teacherId, 'scheduleId:', scheduleId, 'title:', title);
+        return res.status(400).json({ error: '缺少必要参数' });
+    }
+    
+    const sql = `
+        INSERT INTO tasks (
+            teacher_id, schedule_id, course_id, title, description,
+            task_type, priority, due_date, due_time, specific_date,
+            weekday, time_slot, is_recurring, recurrence_pattern
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    
+    const params = [
+        teacherId, scheduleId, courseId || null, title, description || '',
+        taskType || 'general', priority || 1, dueDate, dueTime || null,
+        specificDate || null, weekday || null, timeSlot || null,
+        isRecurring || false, recurrencePattern || null
+    ];
+    
+    console.log('执行SQL:', sql);
+    console.log('参数:', params);
+    
+    req.db.run(sql, params, function(err) {
+        if (err) {
+            console.error('创建任务失败:', err.message);
+            console.error('完整错误:', err);
+            res.status(500).json({ error: '创建任务失败' });
+        } else {
+            console.log('任务创建成功，ID:', this.lastID);
+            res.status(201).json({ 
+                message: '任务创建成功',
+                id: this.lastID 
+            });
+        }
+    });
+});
+
+// 更新任务
+app.put('/api/tasks/:id', (req, res) => {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    // 构建动态更新SQL
+    const updates = [];
+    const params = [];
+    
+    // 只更新提供的字段
+    if (updateData.title !== undefined) {
+        updates.push('title = ?');
+        params.push(updateData.title);
+    }
+    if (updateData.description !== undefined) {
+        updates.push('description = ?');
+        params.push(updateData.description);
+    }
+    if (updateData.taskType !== undefined) {
+        updates.push('task_type = ?');
+        params.push(updateData.taskType);
+    }
+    if (updateData.priority !== undefined) {
+        updates.push('priority = ?');
+        params.push(updateData.priority);
+    }
+    if (updateData.status !== undefined) {
+        updates.push('status = ?');
+        params.push(updateData.status);
+        
+        // 处理完成时间
+        if (updateData.status === 'completed') {
+            updates.push('completed_at = CASE WHEN status != "completed" THEN CURRENT_TIMESTAMP ELSE completed_at END');
+        } else {
+            updates.push('completed_at = NULL');
+        }
+    }
+    if (updateData.dueDate !== undefined) {
+        updates.push('due_date = ?');
+        params.push(updateData.dueDate);
+    }
+    if (updateData.dueTime !== undefined) {
+        updates.push('due_time = ?');
+        params.push(updateData.dueTime);
+    }
+    if (updateData.weekday !== undefined) {
+        updates.push('weekday = ?');
+        params.push(updateData.weekday);
+    }
+    if (updateData.timeSlot !== undefined) {
+        updates.push('time_slot = ?');
+        params.push(updateData.timeSlot);
+    }
+    
+    if (updates.length === 0) {
+        return res.status(400).json({ error: '没有要更新的字段' });
+    }
+    
+    // 总是更新updated_at
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+    
+    const sql = `UPDATE tasks SET ${updates.join(', ')} WHERE id = ?`;
+    params.push(id);
+    
+    req.db.run(sql, params, function(err) {
+        if (err) {
+            console.error('更新任务失败:', err.message);
+            res.status(500).json({ error: '更新任务失败' });
+        } else if (this.changes === 0) {
+            res.status(404).json({ error: '任务不存在' });
+        } else {
+            res.json({ message: '任务更新成功' });
+        }
+    });
+});
+
+// 删除任务
+app.delete('/api/tasks/:id', (req, res) => {
+    const { id } = req.params;
+    
+    req.db.run('DELETE FROM tasks WHERE id = ?', [id], function(err) {
+        if (err) {
+            console.error('删除任务失败:', err.message);
+            res.status(500).json({ error: '删除任务失败' });
+        } else if (this.changes === 0) {
+            res.status(404).json({ error: '任务不存在' });
+        } else {
+            res.json({ message: '任务删除成功' });
+        }
+    });
+});
+
 // 404处理
 app.use((req, res) => {
     res.status(404).json({ error: '接口不存在' });

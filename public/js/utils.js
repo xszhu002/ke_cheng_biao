@@ -169,13 +169,22 @@ const DOMUtils = {
 
     /**
      * 添加事件监听器
-     * @param {Element} element 元素
+     * @param {Element|string} element 元素或选择器
      * @param {string} event 事件名
      * @param {Function} handler 处理函数
      * @param {Object} options 选项
      */
     on(element, event, handler, options = {}) {
-        element.addEventListener(event, handler, options);
+        // 如果传入的是字符串，先获取元素
+        if (typeof element === 'string') {
+            element = this.$(element);
+        }
+        
+        if (element && typeof element.addEventListener === 'function') {
+            element.addEventListener(event, handler, options);
+        } else {
+            console.warn('DOMUtils.on: 无效的元素', element);
+        }
     },
 
     /**
