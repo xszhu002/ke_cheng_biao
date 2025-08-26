@@ -176,6 +176,9 @@ class ScheduleManager {
      * 渲染课程表
      */
     renderScheduleTable() {
+        // 更新表头日期
+        this.updateScheduleHeader();
+        
         // 清空现有课程
         this.clearScheduleTable();
         
@@ -189,6 +192,36 @@ class ScheduleManager {
         // 渲染特需托管（第9个时间段）
         this.specialCare.forEach(care => {
             this.renderSpecialCareBlock(care);
+        });
+    }
+
+    /**
+     * 更新课表表头日期
+     */
+    updateScheduleHeader() {
+        if (!this.currentSemester || !this.currentSemester.start_date) {
+            return;
+        }
+
+        const startDate = DateUtils.parseDate(this.currentSemester.start_date);
+        const weekRange = DateUtils.getWeekDateRange(startDate, this.currentWeek);
+        
+        if (!weekRange) return;
+
+        // 获取表头的星期列
+        const headers = DOMUtils.$$('#schedule-table thead th');
+        const weekdays = ['星期一', '星期二', '星期三', '星期四', '星期五'];
+        
+        // 更新每个星期列的标题
+        weekdays.forEach((weekday, index) => {
+            const headerIndex = index + 1; // 跳过第一列（时间/节数）
+            if (headers[headerIndex]) {
+                const date = new Date(weekRange.start);
+                date.setDate(weekRange.start.getDate() + index);
+                
+                const monthDay = DateUtils.formatDate(date, 'MM-DD');
+                headers[headerIndex].textContent = `${weekday} ${monthDay}`;
+            }
         });
     }
 
