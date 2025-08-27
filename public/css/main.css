@@ -111,18 +111,13 @@ body {
     background: white;
 }
 
-/* 侧边面板 */
-.left-panel, .right-panel {
+/* 右侧面板 */
+.right-panel {
     width: 250px;
     background: #f8f9fa;
-    border-right: 1px solid #e9ecef;
+    border-left: 1px solid #e9ecef;
     overflow-y: auto;
     flex-shrink: 0;
-}
-
-.right-panel {
-    border-right: none;
-    border-left: 1px solid #e9ecef;
 }
 
 .panel-section {
@@ -494,22 +489,156 @@ body {
     color: #333;
 }
 
-/* 快速操作 */
-.quick-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+/* 待办事项标签页 */
+.todo-tabs {
+    width: 100%;
 }
 
-.quick-actions .btn {
-    justify-content: flex-start;
-    font-size: 13px;
-    padding: 10px 12px;
+.tab-buttons {
+    display: flex;
+    border-bottom: 1px solid #e9ecef;
+    margin-bottom: 12px;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    color: #6c757d;
+    font-size: 14px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.tab-button:hover {
+    color: #495057;
+    background: #f8f9fa;
+}
+
+.tab-button.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+    background: #f8f9fa;
+}
+
+.tab-content {
+    position: relative;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* 待办事项列表 */
+.todo-list {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.todo-loading {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    padding: 20px;
+}
+
+.todo-item {
+    padding: 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background: white;
+    transition: all 0.2s ease;
+}
+
+.todo-item:hover {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-color: #007bff;
+}
+
+.todo-item.completed {
+    background: #f8f9fa;
+    opacity: 0.8;
+}
+
+.todo-item.completed .todo-title {
+    text-decoration: line-through;
+    color: #6c757d;
+}
+
+.todo-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.todo-title {
+    font-weight: 600;
+    color: #495057;
+    font-size: 14px;
+    flex: 1;
+    margin-right: 8px;
+}
+
+.todo-type {
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: white;
+    font-weight: 500;
+}
+
+.todo-type.preparation { background: #17a2b8; }
+.todo-type.grading { background: #28a745; }
+.todo-type.meeting { background: #ffc107; color: #212529; }
+.todo-type.assessment { background: #dc3545; }
+.todo-type.general { background: #6c757d; }
+
+.todo-description {
+    font-size: 12px;
+    color: #6c757d;
+    margin-bottom: 6px;
+    line-height: 1.4;
+}
+
+.todo-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #868e96;
+}
+
+.todo-priority {
+    font-weight: 500;
+}
+
+.todo-priority.high { color: #dc3545; }
+.todo-priority.medium { color: #ffc107; }
+.todo-priority.low { color: #28a745; }
+
+.todo-checkbox {
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.todo-empty {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    padding: 40px 20px;
 }
 
 /* 响应式设计 */
 @media (max-width: 1200px) {
-    .left-panel, .right-panel {
+    .right-panel {
         width: 200px;
     }
 }
@@ -519,7 +648,7 @@ body {
         flex-direction: column;
     }
     
-    .left-panel, .right-panel {
+    .right-panel {
         width: 100%;
         max-height: 200px;
     }

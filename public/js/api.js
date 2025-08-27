@@ -559,6 +559,13 @@ const TaskAPI = {
     },
 
     /**
+     * 获取教师的所有任务（简化版）
+     */
+    async getByTeacher(teacherId) {
+        return await this.getTeacherTasks(teacherId);
+    },
+
+    /**
      * 创建任务
      */
     async create(taskData) {

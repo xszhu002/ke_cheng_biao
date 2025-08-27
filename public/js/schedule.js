@@ -47,6 +47,9 @@ class ScheduleManager {
             // 初始化界面状态
             this.updateWeekDisplay();
             
+            // 加载待办事项列表
+            this.loadTodoList();
+            
         } catch (error) {
             console.error('初始化课程表管理器失败:', error);
             NotificationUtils.error('系统初始化失败');
@@ -135,6 +138,9 @@ class ScheduleManager {
                 
                 // 更新界面
                 this.updateTeacherDisplay(schedule.teacher_name);
+                
+                // 加载待办事项列表
+                this.loadTodoList();
             } else {
                 NotificationUtils.warning('该教师还没有创建课程表');
                 this.clearScheduleTable();
@@ -248,7 +254,7 @@ class ScheduleManager {
 
                     // 直接为每个任务创建图标，显示任务标题
         tasks.forEach(task => {
-            const icon = this.createTaskIcon(task.task_type || 'general', 1, task.title);
+            const icon = this.createTaskIcon(task.task_type || 'general', 1, task.title, task.status);
             
             // 添加点击事件
             DOMUtils.on(icon, 'click', (e) => {
@@ -280,7 +286,7 @@ class ScheduleManager {
     /**
      * 创建任务图标
      */
-    createTaskIcon(type, count, title) {
+    createTaskIcon(type, count, title, status) {
         const iconMap = {
             preparation: '📖',  // 备课
             grading: '✍️',     // 批改
@@ -289,8 +295,11 @@ class ScheduleManager {
             general: '📋'      // 其他
         };
 
+        const isCompleted = status === 'completed';
+        const className = `task-icon task-${type}${isCompleted ? ' task-completed' : ''}`;
+
         const icon = DOMUtils.createElement('span', {
-            className: `task-icon task-${type}`,
+            className: className,
             title: title || this.getTaskTypeLabel(type)  // 优先显示任务标题，没有标题时显示任务类型
         });
 
@@ -305,6 +314,7 @@ class ScheduleManager {
 
         // 点击事件将在loadCourseTaskIcons中设置
         icon.dataset.taskType = type;
+        icon.dataset.taskStatus = status || 'pending';
 
         return icon;
     }
@@ -579,6 +589,9 @@ class ScheduleManager {
             // 立即更新对应时间槽的任务图标
             await this.updateTaskIconsForSlot(taskData.weekday, taskData.timeSlot);
             
+            // 重新加载待办事项列表
+            this.loadTodoList();
+            
         } catch (error) {
             console.error('保存任务失败:', error);
             alert('保存任务失败');
@@ -626,7 +639,7 @@ class ScheduleManager {
             
             // 直接为每个任务创建图标，显示任务标题
             tasks.forEach(task => {
-                const icon = this.createTaskIcon(task.task_type || 'general', 1, task.title);
+                const icon = this.createTaskIcon(task.task_type || 'general', 1, task.title, task.status);
                 
                 // 添加点击事件
                 DOMUtils.on(icon, 'click', (e) => {
@@ -960,13 +973,7 @@ class ScheduleManager {
             });
         }
 
-        // 添加教师按钮
-        const addTeacherBtn = DOMUtils.$('#add-teacher-btn');
-        if (addTeacherBtn) {
-            DOMUtils.on(addTeacherBtn, 'click', () => {
-                this.showAddTeacherModal();
-            });
-        }
+        // 添加教师功能移至管理员后台
     }
 
     /**
@@ -1347,6 +1354,189 @@ class ScheduleManager {
             NotificationUtils.error('添加教师失败');
             return false;
         }
+    }
+
+    /**
+     * 加载待办事项列表
+     */
+    async loadTodoList() {
+        console.log('开始加载待办事项列表');
+        const pendingContainer = DOMUtils.$('#todo-list-pending');
+        const completedContainer = DOMUtils.$('#todo-list-completed');
+        
+        if (!pendingContainer || !completedContainer) {
+            console.log('找不到待办事项容器');
+            return;
+        }
+
+        try {
+            // 显示加载状态
+            pendingContainer.innerHTML = '<div class="todo-loading">正在加载待办事项...</div>';
+            completedContainer.innerHTML = '<div class="todo-loading">正在加载已完成事项...</div>';
+
+            // 获取当前教师的所有任务
+            if (!this.currentTeacher) {
+                console.log('当前没有选择教师');
+                pendingContainer.innerHTML = '<div class="todo-empty">请先选择教师</div>';
+                completedContainer.innerHTML = '<div class="todo-empty">请先选择教师</div>';
+                return;
+            }
+
+            console.log('当前教师:', this.currentTeacher);
+            const tasks = await API.Task.getByTeacher(this.currentTeacher.id);
+            console.log('获取到的任务:', tasks);
+            
+            // 按状态分类任务
+            const pendingTasks = tasks.filter(task => task.status !== 'completed');
+            const completedTasks = tasks.filter(task => task.status === 'completed');
+            
+            // 按优先级排序
+            const sortByPriority = (a, b) => {
+                const priorityOrder = { high: 3, medium: 2, low: 1 };
+                return (priorityOrder[b.priority] || 1) - (priorityOrder[a.priority] || 1);
+            };
+            
+            pendingTasks.sort(sortByPriority);
+            completedTasks.sort(sortByPriority);
+
+            this.renderTodoList(pendingTasks, 'pending');
+            this.renderTodoList(completedTasks, 'completed');
+            
+            // 初始化标签页切换事件
+            this.initTodoTabs();
+
+        } catch (error) {
+            console.error('加载待办事项失败:', error);
+            console.error('错误详情:', error.message);
+            pendingContainer.innerHTML = '<div class="todo-empty">加载失败，请稍后重试</div>';
+            completedContainer.innerHTML = '<div class="todo-empty">加载失败，请稍后重试</div>';
+        }
+    }
+
+    /**
+     * 渲染待办事项列表
+     */
+    renderTodoList(tasks, type = 'pending') {
+        const containerId = type === 'completed' ? '#todo-list-completed' : '#todo-list-pending';
+        const todoListContainer = DOMUtils.$(containerId);
+        if (!todoListContainer) return;
+
+        todoListContainer.innerHTML = '';
+
+        if (!tasks || tasks.length === 0) {
+            const emptyMessage = type === 'completed' ? '暂无已完成事项' : '暂无待办事项';
+            todoListContainer.innerHTML = `<div class="todo-empty">${emptyMessage}</div>`;
+            return;
+        }
+
+        tasks.forEach(task => {
+            const todoItem = this.createTodoItem(task);
+            todoListContainer.appendChild(todoItem);
+        });
+    }
+
+    /**
+     * 创建待办事项条目
+     */
+    createTodoItem(task) {
+        const item = DOMUtils.createElement('div', {
+            className: `todo-item ${task.status === 'completed' ? 'completed' : ''}`
+        });
+
+        const priorityLabels = {
+            high: '高',
+            medium: '中', 
+            low: '低'
+        };
+
+        const typeLabels = {
+            preparation: '备课',
+            grading: '批改',
+            meeting: '会议',
+            assessment: '测评',
+            general: '其他'
+        };
+
+        item.innerHTML = `
+            <div class="todo-header">
+                <div style="display: flex; align-items: center;">
+                    <input type="checkbox" class="todo-checkbox" ${task.status === 'completed' ? 'checked' : ''}>
+                    <span class="todo-title">${task.title}</span>
+                </div>
+                <span class="todo-type ${task.task_type || 'general'}">${typeLabels[task.task_type] || '其他'}</span>
+            </div>
+            ${task.description ? `<div class="todo-description">${task.description}</div>` : ''}
+            <div class="todo-meta">
+                <span class="todo-priority ${task.priority || 'medium'}">优先级: ${priorityLabels[task.priority] || '中'}</span>
+                ${task.due_date ? `<span class="todo-due">截止: ${task.due_date}</span>` : ''}
+            </div>
+        `;
+
+        // 添加复选框点击事件
+        const checkbox = item.querySelector('.todo-checkbox');
+        DOMUtils.on(checkbox, 'change', async () => {
+            const newStatus = checkbox.checked ? 'completed' : 'pending';
+            try {
+                await API.Task.update(task.id, { status: newStatus });
+                task.status = newStatus;
+                
+                // 更新项目样式
+                if (newStatus === 'completed') {
+                    item.classList.add('completed');
+                } else {
+                    item.classList.remove('completed');
+                }
+                
+                // 重新加载列表以正确排序
+                this.loadTodoList();
+                
+                // 更新课表主体上对应时间槽的任务图标
+                if (task.weekday && task.time_slot) {
+                    await this.updateTaskIconsForSlot(task.weekday, task.time_slot);
+                }
+                
+            } catch (error) {
+                console.error('更新任务状态失败:', error);
+                checkbox.checked = !checkbox.checked; // 恢复复选框状态
+            }
+        });
+
+        // 添加双击编辑事件
+        DOMUtils.on(item, 'dblclick', () => {
+            this.showTaskDetails(
+                task.schedule_id,
+                task.weekday,
+                task.time_slot,
+                '待办事项详情'
+            );
+        });
+
+        return item;
+    }
+
+    /**
+     * 初始化待办事项标签页切换
+     */
+    initTodoTabs() {
+        const tabButtons = DOMUtils.$$('.tab-button');
+        const tabPanes = DOMUtils.$$('.tab-pane');
+
+        tabButtons.forEach(button => {
+            DOMUtils.on(button, 'click', () => {
+                const targetTab = button.dataset.tab;
+                
+                // 移除所有active类
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabPanes.forEach(pane => pane.classList.remove('active'));
+                
+                // 激活当前标签
+                button.classList.add('active');
+                const targetPane = DOMUtils.$(`#todo-list-${targetTab}`);
+                if (targetPane) {
+                    targetPane.classList.add('active');
+                }
+            });
+        });
     }
 }
 

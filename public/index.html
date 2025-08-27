@@ -44,30 +44,6 @@
 
         <!-- 主内容区域 -->
         <main class="main-content">
-            <!-- 左侧功能面板 -->
-            <aside class="left-panel">
-                <div class="panel-section">
-                    <h3>课程表管理</h3>
-                    <button id="add-teacher-btn" class="btn btn-outline">添加教师</button>
-                    <button id="manage-schedule-btn" class="btn btn-outline">管理课程表</button>
-                </div>
-                
-                <div class="panel-section">
-                    <h3>特需托管</h3>
-                    <button id="add-special-care-btn" class="btn btn-outline">添加特需托管</button>
-                    <div id="special-care-list" class="special-care-list">
-                        <!-- 特需托管列表将动态加载 -->
-                    </div>
-                </div>
-
-                <div class="panel-section">
-                    <h3>操作历史</h3>
-                    <div id="operation-history" class="operation-history">
-                        <!-- 操作历史将动态加载 -->
-                    </div>
-                </div>
-            </aside>
-
             <!-- 中央课程表区域 -->
             <section class="schedule-container">
                 <div class="schedule-wrapper">
@@ -215,14 +191,23 @@
                     </div>
                 </div>
 
-                <div class="panel-section">
-                    <h3>快速操作</h3>
-                    <div class="quick-actions">
-                        <button id="add-course-btn" class="btn btn-outline">添加课程</button>
-                        <button id="bulk-edit-btn" class="btn btn-outline">批量编辑</button>
-                        <button id="export-btn" class="btn btn-outline">导出课程表</button>
+                                    <div class="panel-section">
+                        <h3>待办事项</h3>
+                        <div class="todo-tabs">
+                            <div class="tab-buttons">
+                                <button class="tab-button active" data-tab="pending">待办</button>
+                                <button class="tab-button" data-tab="completed">完成</button>
+                            </div>
+                            <div class="tab-content">
+                                <div id="todo-list-pending" class="todo-list tab-pane active">
+                                    <div class="todo-loading">正在加载待办事项...</div>
+                                </div>
+                                <div id="todo-list-completed" class="todo-list tab-pane">
+                                    <div class="todo-loading">正在加载已完成事项...</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
             </aside>
         </main>
 
