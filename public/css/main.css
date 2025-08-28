@@ -409,17 +409,38 @@ body {
 
 /* 模态对话框 */
 .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
     background: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: center !important;
+    justify-content: center !important;
     z-index: 1000;
     animation: fadeIn 0.2s ease;
+}
+
+/* 只有当modal-overlay被显示时才使用flex布局 */
+.modal-overlay:not([style*="display: none"]) {
+    display: flex !important;
+}
+
+/* 确保隐藏的模态框保持隐藏 */
+.modal-overlay[style*="display: none"] {
+    display: none !important;
+}
+
+/* 确保课程模态框居中 */
+#course-modal[style*="display: block"] {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .modal-content {
@@ -431,6 +452,8 @@ body {
     max-height: 80vh;
     overflow: hidden;
     animation: slideIn 0.3s ease;
+    position: relative;
+    margin: auto;
 }
 
 .modal-header {

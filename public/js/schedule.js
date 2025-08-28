@@ -618,6 +618,30 @@ class ScheduleManager {
     }
 
     /**
+     * 处理添加课程（编辑模式下）
+     */
+    handleAddCourse(weekday, timeSlot) {
+        if (!this.currentSchedule?.id) {
+            showError('请先选择课程表');
+            return;
+        }
+
+        // 检查是否为特需托管时间段
+        if (timeSlot === 9) {
+            // 特需托管通过日历视图添加
+            showInfo('特需托管请通过日历视图添加');
+            return;
+        }
+
+        // 调用拖拽管理器的添加课程功能
+        if (window.app && window.app.dragDropManager) {
+            window.app.dragDropManager.showAddCourseDialog(weekday, timeSlot);
+        } else {
+            showError('系统初始化未完成，请稍后重试');
+        }
+    }
+
+    /**
      * 为空时间槽加载任务图标
      */
     async loadEmptySlotTaskIcons() {
@@ -766,13 +790,25 @@ class ScheduleManager {
                     const weekday = parseInt(newSlot.dataset.weekday);
                     const timeSlot = parseInt(newSlot.dataset.timeSlot);
                     
-                    console.log('空单元格被点击:', { weekday, timeSlot, scheduleId: this.currentSchedule?.id });
+                    console.log('空单元格被点击:', { 
+                        weekday, 
+                        timeSlot, 
+                        scheduleId: this.currentSchedule?.id,
+                        isEditMode: this.isEditMode 
+                    });
                     
-                    this.showAddTaskModal(
-                        this.currentSchedule.id,
-                        weekday,
-                        timeSlot
-                    );
+                    // 根据编辑模式决定操作
+                    if (this.isEditMode) {
+                        // 编辑模式：添加课程
+                        this.handleAddCourse(weekday, timeSlot);
+                    } else {
+                        // 非编辑模式：添加任务
+                        this.showAddTaskModal(
+                            this.currentSchedule.id,
+                            weekday,
+                            timeSlot
+                        );
+                    }
                 }
             });
         });
