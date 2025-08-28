@@ -199,10 +199,10 @@ app.get('/api/schedules/:scheduleId/week/:week', (req, res) => {
             const weekEnd = new Date(weekStart);
             weekEnd.setDate(weekStart.getDate() + 4); // 周五
             
-            // 获取该周的特需托管（只获取临时课程）
+            // 获取该周的特需托管（特需托管只有原始记录，没有临时副本）
             const specialCareSql = `
                 SELECT * FROM course_arrangements 
-                WHERE schedule_id = ? AND course_type = 'special_care' AND is_original = FALSE
+                WHERE schedule_id = ? AND course_type = 'special_care' AND is_original = TRUE
                 AND specific_date BETWEEN ? AND ?
                 ORDER BY specific_date
             `;
@@ -389,31 +389,53 @@ app.delete('/api/courses/:id', (req, res) => {
 app.post('/api/special-care', (req, res) => {
     const { scheduleId, specificDate, courseName, classroom, notes, isEditMode } = req.body;
     
+
+    
     // 验证参数
     if (!scheduleId || !specificDate || !courseName) {
         res.status(400).json({ error: '缺少必要参数' });
         return;
     }
     
-    // 根据是否为编辑模式决定是否设为原始课程
-    const isOriginal = isEditMode === true;
-    
-    const sql = `
-        INSERT INTO course_arrangements 
-        (schedule_id, time_slot, course_name, classroom, course_type, specific_date, notes, is_original)
-        VALUES (?, 9, ?, ?, 'special_care', ?, ?, ?)
+    // 检查是否已存在相同的特需托管
+    const checkExistSql = `
+        SELECT COUNT(*) as count FROM course_arrangements 
+        WHERE schedule_id = ? AND specific_date = ? AND course_name = ? AND course_type = 'special_care'
     `;
     
-    req.db.run(sql, [scheduleId, courseName, classroom || null, specificDate, notes || null, isOriginal], function(err) {
-        if (err) {
-            console.error('添加特需托管失败:', err.message);
-            res.status(500).json({ error: '添加特需托管失败: ' + err.message });
-        } else {
-            res.json({ 
-                id: this.lastID, 
-                message: '特需托管添加成功' 
-            });
+    req.db.get(checkExistSql, [scheduleId, specificDate, courseName], (checkErr, result) => {
+        if (checkErr) {
+            console.error('检查重复特需托管失败:', checkErr.message);
+            res.status(500).json({ error: '添加特需托管失败: ' + checkErr.message });
+            return;
         }
+        
+        if (result.count > 0) {
+            res.status(400).json({ error: '该日期已存在相同的特需托管' });
+            return;
+        }
+        
+        // 根据是否为编辑模式决定是否设为原始课程
+        const isOriginal = isEditMode === true;
+        
+        const sql = `
+            INSERT INTO course_arrangements 
+            (schedule_id, time_slot, course_name, classroom, course_type, specific_date, notes, is_original)
+            VALUES (?, 9, ?, ?, 'special_care', ?, ?, ?)
+        `;
+        
+        req.db.run(sql, [scheduleId, courseName, classroom || null, specificDate, notes || null, isOriginal], function(err) {
+            if (err) {
+                console.error('添加特需托管失败:', err.message);
+                res.status(500).json({ error: '添加特需托管失败: ' + err.message });
+            } else {
+
+                res.json({ 
+                    id: this.lastID, 
+                    message: '特需托管添加成功' 
+                });
+            }
+        });
     });
 });
 
@@ -537,8 +559,29 @@ app.post('/api/schedules/:id/save-original', (req, res) => {
                             const regularCourses = originalCourses.filter(course => course.course_type !== 'special_care');
                             const specialCareCourses = originalCourses.filter(course => course.course_type === 'special_care');
                             
-                            // 4. 重新插入原始课程（包括常规课程和特需托管）
-                            const originalInsertPromises = originalCourses.map(course => {
+                            // 4. 重新插入原始课程（去重处理，避免重复插入特需托管）
+                            // 对于特需托管，使用更严格的去重逻辑：课程名称 + 日期 + 教室
+                            const uniqueCourses = new Map();
+                            originalCourses.forEach(course => {
+                                let key;
+                                if (course.course_type === 'special_care') {
+                                    key = `special_care_${course.specific_date}_${course.course_name}_${course.classroom || 'no_classroom'}`;
+                                } else {
+                                    key = `${course.weekday}_${course.time_slot}_${course.course_name}`;
+                                }
+                                
+                                // 如果键已存在，保留ID较小的（较早创建的）
+                                if (uniqueCourses.has(key)) {
+                                    const existing = uniqueCourses.get(key);
+                                    if (course.id < existing.id) {
+                                        uniqueCourses.set(key, course);
+                                    }
+                                } else {
+                                    uniqueCourses.set(key, course);
+                                }
+                            });
+                            
+                            const originalInsertPromises = Array.from(uniqueCourses.values()).map(course => {
                                 return new Promise((resolve, reject) => {
                                     const insertSql = `
                                         INSERT INTO course_arrangements 
@@ -566,8 +609,9 @@ app.post('/api/schedules/:id/save-original', (req, res) => {
                                 });
                             });
                             
-                            // 5. 为所有课程（包括常规课程和特需托管）创建临时副本
-                            const tempInsertPromises = originalCourses.map(course => {
+                            // 5. 只为常规课程创建临时副本，特需托管不需要临时副本
+                            const regularCoursesOnly = Array.from(uniqueCourses.values()).filter(course => course.course_type !== 'special_care');
+                            const tempInsertPromises = regularCoursesOnly.map(course => {
                                 return new Promise((resolve, reject) => {
                                     const insertSql = `
                                         INSERT INTO course_arrangements 
@@ -759,23 +803,37 @@ app.get('/api/schedules/:scheduleId/original', (req, res) => {
             return;
         }
         
-        // 获取原始特需托管
+        // 获取原始特需托管（去重处理）
         const specialCareSql = `
             SELECT * FROM course_arrangements 
             WHERE schedule_id = ? AND course_type = 'special_care' AND is_original = TRUE
-            ORDER BY specific_date
+            ORDER BY specific_date, id
         `;
         
-        req.db.all(specialCareSql, [scheduleId], (err, specialCare) => {
+        req.db.all(specialCareSql, [scheduleId], (err, specialCareRows) => {
             if (err) {
                 console.error('获取原始特需托管失败:', err.message);
                 res.status(500).json({ error: '获取原始特需托管失败' });
                 return;
             }
             
+            // 对特需托管进行去重：相同日期+课程名称+教室的只保留ID最小的（最早创建的）
+            const uniqueSpecialCare = [];
+            const seen = new Set();
+            
+            for (const care of specialCareRows) {
+                const key = `${care.specific_date}_${care.course_name}_${care.classroom || 'no_classroom'}`;
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    uniqueSpecialCare.push(care);
+                }
+            }
+            
+            console.log(`特需托管去重: 原始${specialCareRows.length}条，去重后${uniqueSpecialCare.length}条`);
+            
             res.json({
                 regularCourses: regularCourses || [],
-                specialCare: specialCare || []
+                specialCare: uniqueSpecialCare
             });
         });
     });

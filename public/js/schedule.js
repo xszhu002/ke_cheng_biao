@@ -903,6 +903,11 @@ class ScheduleManager {
         
         if (!timeSlot) return;
 
+        // 清理时间槽中的现有内容（比如空单元格的任务图标容器）
+        while (timeSlot.firstChild) {
+            timeSlot.removeChild(timeSlot.firstChild);
+        }
+
         const careBlock = DOMUtils.createElement('div', {
             className: 'course-block special-care',
             dataset: {
@@ -925,11 +930,6 @@ class ScheduleManager {
 
         careBlock.appendChild(careName);
         careBlock.appendChild(careDate2);
-
-        // 清理时间槽中的现有内容（比如空单元格的任务图标容器）
-        while (timeSlot.firstChild) {
-            timeSlot.removeChild(timeSlot.firstChild);
-        }
 
         timeSlot.appendChild(careBlock);
         timeSlot.classList.remove('empty');
