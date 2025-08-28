@@ -141,6 +141,22 @@ class ScheduleManager {
                 
                 // 加载待办事项列表
                 this.loadTodoList();
+                
+                // 触发教师变化事件
+                const teacherChangedEvent = new CustomEvent('teacherChanged', {
+                    detail: { 
+                        teacherId: this.currentTeacher.id, 
+                        scheduleId: this.currentSchedule.id 
+                    }
+                });
+                document.dispatchEvent(teacherChangedEvent);
+                
+                // 触发周次变化事件
+                const currentYear = new Date().getFullYear();
+                const weekChangedEvent = new CustomEvent('weekChanged', {
+                    detail: { year: currentYear, week: this.currentWeek }
+                });
+                document.dispatchEvent(weekChangedEvent);
             } else {
                 NotificationUtils.warning('该教师还没有创建课程表');
                 this.clearScheduleTable();
@@ -429,7 +445,7 @@ class ScheduleManager {
         
         // 如果仍然没有参数，不能添加任务
         if (!scheduleId || !weekday || !timeSlot) {
-            alert('请先选择课程时间段');
+            showError('请先选择课程时间段');
             return;
         }
         
@@ -466,7 +482,7 @@ class ScheduleManager {
             const task = tasks.find(t => t.id === taskId);
             
             if (!task) {
-                alert('任务不存在');
+                showError('任务不存在');
                 return;
             }
             
@@ -488,7 +504,7 @@ class ScheduleManager {
             
         } catch (error) {
             console.error('获取任务详情失败:', error);
-            alert('获取任务详情失败');
+            showError('获取任务详情失败');
         }
     }
 
@@ -511,7 +527,7 @@ class ScheduleManager {
             }
         } catch (error) {
             console.error('删除任务失败:', error);
-            alert('删除任务失败');
+            showError('删除任务失败');
         }
     }
 
@@ -534,7 +550,7 @@ class ScheduleManager {
             }
         } catch (error) {
             console.error('更新任务状态失败:', error);
-            alert('更新任务状态失败');
+            showError('更新任务状态失败');
         }
     }
 
@@ -562,7 +578,7 @@ class ScheduleManager {
         console.log('任务提交数据:', taskData);
         
         if (!taskData.title) {
-            alert('请输入任务标题');
+            showError('请输入任务标题');
             return;
         }
         
@@ -592,9 +608,12 @@ class ScheduleManager {
             // 重新加载待办事项列表
             this.loadTodoList();
             
+            // 显示成功提示
+            showSuccess('任务保存成功');
+            
         } catch (error) {
             console.error('保存任务失败:', error);
-            alert('保存任务失败');
+            showError('保存任务失败');
         }
     }
 
@@ -1021,6 +1040,13 @@ class ScheduleManager {
         if (this.currentSchedule) {
             await this.loadWeekSchedule();
         }
+        
+        // 触发周次变化事件
+        const currentYear = new Date().getFullYear();
+        const weekChangedEvent = new CustomEvent('weekChanged', {
+            detail: { year: currentYear, week: this.currentWeek }
+        });
+        document.dispatchEvent(weekChangedEvent);
     }
 
     /**

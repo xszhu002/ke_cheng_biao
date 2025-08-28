@@ -44,8 +44,10 @@
 
         <!-- 主内容区域 -->
         <main class="main-content">
-            <!-- 中央课程表区域 -->
-            <section class="schedule-container">
+            <!-- 左侧主区域 -->
+            <div class="left-main-area">
+                <!-- 中央课程表区域 -->
+                <section class="schedule-container">
                 <div class="schedule-wrapper">
                     <table class="schedule-table" id="schedule-table">
                         <thead>
@@ -182,6 +184,37 @@
                 </div>
             </section>
 
+            <!-- 随手记功能 -->
+            <div class="notes-section">
+                <div class="notes-header">
+                    <h3>📝 随手记</h3>
+                    <div class="notes-week-info">
+                        <span id="notes-week-display">第1周</span>
+                        <div class="notes-buttons">
+                            <div id="notes-view-buttons" class="notes-view-buttons">
+                                <button id="notes-toggle-mode" class="notes-toggle-btn">编辑</button>
+                            </div>
+                            <div id="notes-edit-buttons" class="notes-edit-buttons hidden">
+                                <button id="notes-save" class="notes-btn notes-save">保存</button>
+                                <button id="notes-cancel" class="notes-btn notes-cancel">取消</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="notes-container">
+                    <div id="notes-editor" class="notes-editor hidden">
+                        <textarea id="notes-textarea" placeholder="支持Markdown语法，记录本周的想法、计划或重要事项..."></textarea>
+                        <div class="notes-editor-toolbar">
+                            <span class="notes-help">支持 **粗体** *斜体* `代码` 等Markdown语法</span>
+                        </div>
+                    </div>
+                    <div id="notes-preview" class="notes-preview">
+                        <div class="notes-content">暂无记录，点击"编辑"开始记录...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
             <!-- 右侧信息面板 -->
             <aside class="right-panel">
                 <div class="panel-section">
@@ -211,29 +244,7 @@
             </aside>
         </main>
 
-        <!-- 随手记功能 -->
-        <div class="notes-section">
-            <div class="notes-header">
-                <h3>📝 随手记</h3>
-                <div class="notes-week-info">
-                    <span id="notes-week-display">第1周</span>
-                    <button id="notes-toggle-mode" class="notes-toggle-btn">编辑</button>
-                </div>
-            </div>
-            <div class="notes-container">
-                <div id="notes-editor" class="notes-editor hidden">
-                    <textarea id="notes-textarea" placeholder="支持Markdown语法，记录本周的想法、计划或重要事项..."></textarea>
-                    <div class="notes-editor-toolbar">
-                        <button id="notes-save" class="notes-btn notes-save">保存</button>
-                        <button id="notes-cancel" class="notes-btn notes-cancel">取消</button>
-                        <span class="notes-help">支持 **粗体** *斜体* `代码` 等Markdown语法</span>
-                    </div>
-                </div>
-                <div id="notes-preview" class="notes-preview">
-                    <div class="notes-content">暂无记录，点击"编辑"开始记录...</div>
-                </div>
-            </div>
-        </div>
+
 
         <!-- 日历视图（默认隐藏） -->
         <div id="calendar-view" class="calendar-view" style="display: none;">
@@ -429,9 +440,11 @@
     <!-- JavaScript文件 -->
     <script src="js/utils.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/toast.js"></script>
     <script src="js/dragdrop.js"></script>
     <script src="js/schedule.js"></script>
     <script src="js/calendar.js"></script>
+    <script src="js/notes.js"></script>
     <script src="js/app.js"></script>
     
     <script>
@@ -531,5 +544,8 @@
             }
         }
     </script>
+
+    <!-- Toast提示容器 -->
+    <div id="toast-container" class="toast-container"></div>
 </body>
 </html> 

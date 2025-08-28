@@ -436,12 +436,17 @@ const NotificationUtils = {
      * @param {number} duration 持续时间(毫秒)
      */
     show(message, type = 'info', duration = 3000) {
-        // 创建通知元素
+        // 使用新的Toast系统
+        if (window.Toast) {
+            return window.Toast.show(message, type, null, duration);
+        }
+        
+        // 后备方案：如果Toast系统未加载，使用原有方式但位置改为右下角
         const notification = DOMUtils.createElement('div', {
             className: `notification notification-${type}`,
             style: `
                 position: fixed;
-                top: 20px;
+                bottom: 80px;
                 right: 20px;
                 padding: 12px 20px;
                 border-radius: 6px;
@@ -581,4 +586,76 @@ style.textContent = `
         }
     }
 `;
-document.head.appendChild(style); 
+document.head.appendChild(style);
+
+/**
+ * 简单的Markdown解析器
+ */
+const MarkdownUtils = {
+    /**
+     * 解析Markdown文本为HTML
+     */
+    parse(markdown) {
+        if (!markdown) return '';
+        
+        let html = markdown
+            // 转义HTML特殊字符
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            
+            // 标题
+            .replace(/^### (.*)/gm, '<h3>$1</h3>')
+            .replace(/^## (.*)/gm, '<h2>$1</h2>')
+            .replace(/^# (.*)/gm, '<h1>$1</h1>')
+            
+            // 粗体和斜体
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            
+            // 代码
+            .replace(/`([^`]+)`/g, '<code>$1</code>')
+            
+            // 分割线
+            .replace(/^---$/gm, '<hr>')
+            
+            // 引用
+            .replace(/^> (.*)/gm, '<blockquote>$1</blockquote>')
+            
+            // 无序列表
+            .replace(/^- (.*)/gm, '<li>$1</li>')
+            .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+            
+            // 有序列表  
+            .replace(/^\d+\. (.*)/gm, '<li>$1</li>')
+            
+            // 段落
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/^(.*)$/gm, function(match, content) {
+                // 避免重复包装已经是HTML标签的内容
+                if (content.startsWith('<') || content.trim() === '') {
+                    return content;
+                }
+                return content;
+            });
+        
+        // 包装段落
+        html = '<p>' + html + '</p>';
+        
+        // 清理多余的段落标签
+        html = html
+            .replace(/<p><h([1-6])>/g, '<h$1>')
+            .replace(/<\/h([1-6])><\/p>/g, '</h$1>')
+            .replace(/<p><ul>/g, '<ul>')
+            .replace(/<\/ul><\/p>/g, '</ul>')
+            .replace(/<p><ol>/g, '<ol>')
+            .replace(/<\/ol><\/p>/g, '</ol>')
+            .replace(/<p><blockquote>/g, '<blockquote>')
+            .replace(/<\/blockquote><\/p>/g, '</blockquote>')
+            .replace(/<p><hr><\/p>/g, '<hr>')
+            .replace(/<p><\/p>/g, '')
+            .replace(/^\s*<p>\s*<\/p>\s*$/g, '');
+        
+        return html;
+    }
+}; 

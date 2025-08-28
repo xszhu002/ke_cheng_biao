@@ -608,6 +608,29 @@ const TaskAPI = {
     }
 };
 
+// 随手记API
+const WeeklyNotesAPI = {
+    /**
+     * 获取随手记
+     */
+    async get(teacherId, scheduleId, year, week) {
+        return await apiClient.get(`/weekly-notes/${teacherId}/${scheduleId}/${year}/${week}`);
+    },
+
+    /**
+     * 保存随手记
+     */
+    async save(teacherId, scheduleId, year, weekNumber, content) {
+        return await apiClient.post('/weekly-notes', {
+            teacherId,
+            scheduleId,
+            year,
+            weekNumber,
+            content
+        });
+    }
+};
+
 // 导出API对象
 window.API = {
     Teacher: TeacherAPI,
@@ -615,7 +638,8 @@ window.API = {
     Course: CourseAPI,
     SpecialCare: SpecialCareAPI,
     Calendar: CalendarAPI,
-    Task: TaskAPI
+    Task: TaskAPI,
+    WeeklyNotes: WeeklyNotesAPI
 };
 
 // 导出工具函数

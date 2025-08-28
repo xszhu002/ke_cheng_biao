@@ -17,8 +17,31 @@ const db = new sqlite3.Database(dbPath, (err) => {
         console.error('数据库连接失败:', err.message);
     } else {
         console.log('数据库连接成功');
+        // 确保随手记表存在
+        initWeeklyNotesTable();
     }
 });
+
+// 初始化随手记表
+function initWeeklyNotesTable() {
+    db.run(`CREATE TABLE IF NOT EXISTS weekly_notes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        teacher_id INTEGER NOT NULL,
+        schedule_id INTEGER NOT NULL,
+        year INTEGER NOT NULL,
+        week_number INTEGER NOT NULL,
+        content TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (teacher_id) REFERENCES teachers(id),
+        FOREIGN KEY (schedule_id) REFERENCES schedules(id),
+        UNIQUE(teacher_id, schedule_id, year, week_number)
+    )`, (err) => {
+        if (err) {
+            console.error('创建随手记表失败:', err.message);
+        }
+    });
+}
 
 // 中间件配置
 app.use(cors());
@@ -1640,6 +1663,46 @@ app.delete('/api/tasks/:id', (req, res) => {
             res.status(404).json({ error: '任务不存在' });
         } else {
             res.json({ message: '任务删除成功' });
+        }
+    });
+});
+
+// 随手记API
+// 获取指定教师、课表、年份、周次的随手记
+app.get('/api/weekly-notes/:teacherId/:scheduleId/:year/:week', (req, res) => {
+    const { teacherId, scheduleId, year, week } = req.params;
+    
+    const sql = `SELECT * FROM weekly_notes 
+                 WHERE teacher_id = ? AND schedule_id = ? AND year = ? AND week_number = ?`;
+    
+    db.get(sql, [teacherId, scheduleId, year, week], (err, row) => {
+        if (err) {
+            console.error('获取随手记失败:', err.message);
+            res.status(500).json({ error: '获取随手记失败' });
+        } else {
+            res.json(row || { content: '' });
+        }
+    });
+});
+
+// 保存随手记
+app.post('/api/weekly-notes', (req, res) => {
+    const { teacherId, scheduleId, year, weekNumber, content } = req.body;
+    
+    if (!teacherId || !scheduleId || !year || !weekNumber) {
+        return res.status(400).json({ error: '缺少必要参数' });
+    }
+    
+    const sql = `INSERT OR REPLACE INTO weekly_notes 
+                 (teacher_id, schedule_id, year, week_number, content, updated_at) 
+                 VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`;
+    
+    db.run(sql, [teacherId, scheduleId, year, weekNumber, content || ''], function(err) {
+        if (err) {
+            console.error('保存随手记失败:', err.message);
+            res.status(500).json({ error: '保存随手记失败' });
+        } else {
+            res.json({ message: '保存成功', id: this.lastID });
         }
     });
 });

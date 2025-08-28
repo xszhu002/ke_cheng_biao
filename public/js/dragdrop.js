@@ -68,9 +68,8 @@ class DragDropManager {
         DOMUtils.on(scheduleTable, 'click', (e) => {
             if (e.target.closest('.course-block')) {
                 this.handleCourseClick(e);
-            } else if (e.target.closest('.time-slot')) {
-                this.handleTimeSlotClick(e);
             }
+            // 移除时间槽点击处理，现在由ScheduleManager处理（用于添加任务）
         });
     }
 
@@ -83,7 +82,7 @@ class DragDropManager {
         // 检查是否为特需托管，特需托管不允许拖拽
         if (courseBlock.dataset.courseType === 'special_care') {
             e.preventDefault();
-            NotificationUtils.warning('特需托管课程不能拖拽移动，请通过日历视图进行管理');
+            showWarning('特需托管课程不能拖拽移动，请通过日历视图进行管理');
             return;
         }
         
@@ -191,11 +190,11 @@ class DragDropManager {
             // 执行移动
             await this.moveCourse(targetWeekday, targetTimeSlot);
             
-            NotificationUtils.success('课程移动成功');
+            showSuccess('课程移动成功');
             
         } catch (error) {
             console.error('移动课程失败:', error);
-            NotificationUtils.error('移动课程失败');
+            showError('移动课程失败');
         }
 
         // 清理状态
@@ -388,32 +387,33 @@ class DragDropManager {
 
     /**
      * 处理时间段点击事件 - 添加新课程
+     * 注意：此方法已停用，时间槽点击现在由ScheduleManager处理（用于添加任务）
      */
-    handleTimeSlotClick(e) {
-        // 检查是否在编辑模式
-        if (!this.scheduleManager.isEditMode) {
-            NotificationUtils.warning('请先点击"编辑课表"按钮进入编辑模式');
-            return;
-        }
+    // handleTimeSlotClick(e) {
+    //     // 检查是否在编辑模式
+    //     if (!this.scheduleManager.isEditMode) {
+    //         NotificationUtils.warning('请先点击"编辑课表"按钮进入编辑模式');
+    //         return;
+    //     }
 
-        const timeSlot = e.target.closest('.time-slot');
-        if (!timeSlot) return;
+    //     const timeSlot = e.target.closest('.time-slot');
+    //     if (!timeSlot) return;
 
-        // 检查是否已有课程
-        const existingCourse = timeSlot.querySelector('.course-block');
-        if (existingCourse) return;
+    //     // 检查是否已有课程
+    //     const existingCourse = timeSlot.querySelector('.course-block');
+    //     if (existingCourse) return;
 
-        // 获取时间段信息
-        const weekday = parseInt(timeSlot.dataset.weekday);
-        const timeSlotNumber = parseInt(timeSlot.dataset.timeSlot);
+    //     // 获取时间段信息
+    //     const weekday = parseInt(timeSlot.dataset.weekday);
+    //     const timeSlotNumber = parseInt(timeSlot.dataset.timeSlot);
 
-        // 检查是否为特需托管时间段
-        if (timeSlotNumber === 9) {
-            this.showAddSpecialCareDialog(weekday);
-        } else {
-            this.showAddCourseDialog(weekday, timeSlotNumber);
-        }
-    }
+    //     // 检查是否为特需托管时间段
+    //     if (timeSlotNumber === 9) {
+    //         this.showAddSpecialCareDialog(weekday);
+    //     } else {
+    //         this.showAddCourseDialog(weekday, timeSlotNumber);
+    //     }
+    // }
 
     /**
      * 显示添加课程对话框
