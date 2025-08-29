@@ -298,6 +298,28 @@ class DragDropManager {
     }
 
     /**
+     * 获取删除按钮HTML
+     */
+    getDeleteButtonHtml(courseType, courseId) {
+        // 调试信息
+        console.log('getDeleteButtonHtml:', { 
+            courseType, 
+            courseId, 
+            isEditMode: this.scheduleManager.isEditMode 
+        });
+        
+        // 如果是特需托管且不在编辑模式，不显示删除按钮
+        if (courseType === 'special_care' && !this.scheduleManager.isEditMode) {
+            return '<span class="detail-tip" style="margin-left: 8px; color: #999; font-size: 12px;">进入编辑模式可删除特需托管</span>';
+        }
+        
+        // 其他情况显示删除按钮
+        return `<button class="btn btn-outline" style="margin-left: 8px;" onclick="app.dragDropManager.deleteCourse('${courseId}', '${courseType}')">
+            删除课程
+        </button>`;
+    }
+
+    /**
      * 显示课程详情
      */
     showCourseDetails(courseBlock) {
@@ -330,9 +352,7 @@ class DragDropManager {
                     <button class="btn btn-outline" onclick="app.dragDropManager.editCourse('${courseBlock.dataset.courseId || courseBlock.dataset.careId}', '${courseData.courseType}')">
                         编辑课程
                     </button>
-                    <button class="btn btn-outline" style="margin-left: 8px;" onclick="app.dragDropManager.deleteCourse('${courseBlock.dataset.courseId || courseBlock.dataset.careId}', '${courseData.courseType}')">
-                        删除课程
-                    </button>
+                    ${this.getDeleteButtonHtml(courseData.courseType, courseBlock.dataset.courseId || courseBlock.dataset.careId)}
                 </div>
             `;
         }
@@ -349,19 +369,85 @@ class DragDropManager {
      */
     editCourse(courseId, courseType) {
         console.log('编辑课程:', courseId, courseType);
-        // 这里可以实现课程编辑功能
-        NotificationUtils.info('课程编辑功能待实现');
+        
+        // 特需托管暂不支持编辑
+        if (courseType === 'special_care') {
+            NotificationUtils.info('特需托管请通过日历视图进行编辑');
+            return;
+        }
+        
+        // 查找对应的课程块
+        const courseBlock = DOMUtils.$(`[data-course-id="${courseId}"]`);
+        if (!courseBlock) {
+            NotificationUtils.error('找不到要编辑的课程');
+            return;
+        }
+        
+        // 获取课程信息
+        const courseData = {
+            id: courseId,
+            courseName: courseBlock.querySelector('.course-name')?.textContent || '',
+            classroom: courseBlock.querySelector('.course-classroom')?.textContent || '',
+            weekday: courseBlock.dataset.weekday,
+            timeSlot: courseBlock.dataset.timeSlot,
+            scheduleId: window.app.scheduleManager.currentScheduleId
+        };
+        
+        // 填充编辑表单
+        this.openEditModal(courseData);
+    }
+    
+    /**
+     * 打开编辑模态框
+     */
+    openEditModal(courseData) {
+        const modal = DOMUtils.$('#course-modal');
+        const form = DOMUtils.$('#course-form');
+        const modalTitle = modal.querySelector('.modal-title');
+        
+        if (!modal || !form) {
+            NotificationUtils.error('找不到编辑界面');
+            return;
+        }
+        
+        // 设置标题
+        modalTitle.textContent = '编辑课程';
+        
+        // 填充表单数据
+        form.querySelector('#course-name').value = courseData.courseName;
+        form.querySelector('#course-classroom').value = courseData.classroom;
+        form.querySelector('#course-teacher').value = '张老师'; // 暂时固定
+        form.querySelector('#course-notes').value = '';
+        
+        // 在表单上存储课程信息，用于更新时使用
+        form.dataset.courseId = courseData.id;
+        form.dataset.scheduleId = courseData.scheduleId;
+        form.dataset.weekday = courseData.weekday;
+        form.dataset.timeSlot = courseData.timeSlot;
+        form.dataset.isEditing = 'true';
+        
+        // 显示模态框
+        modal.style.display = 'block';
     }
 
     /**
      * 删除课程
      */
     async deleteCourse(courseId, courseType) {
+        // 在非编辑模式下，不允许删除特需托管
+        if (courseType === 'special_care' && !this.scheduleManager.isEditMode) {
+            NotificationUtils.warning('请先进入编辑模式才能删除特需托管');
+            return;
+        }
+        
         if (!confirm('确定要删除这门课程吗？')) {
             return;
         }
 
         try {
+            // 先关闭所有模态框
+            this.closeAllModals();
+            
             if (courseType === 'special_care') {
                 await API.SpecialCare.delete(courseId);
             } else {
@@ -370,19 +456,77 @@ class DragDropManager {
 
             NotificationUtils.success('课程删除成功');
             
-            // 重新加载课程表
-            await this.scheduleManager.loadWeekSchedule();
-            
             // 清空详情面板
             const detailsContainer = DOMUtils.$('#course-details');
             if (detailsContainer) {
                 detailsContainer.innerHTML = '<p>点击课程查看详情</p>';
             }
+            
+            // 重新加载课程表
+            if (courseType === 'special_care') {
+                // 特需托管删除后重新加载原始课程表
+                await this.scheduleManager.loadOriginalCourses();
+            } else {
+                await this.scheduleManager.loadWeekSchedule();
+            }
+            
+            // 再次确保模态框关闭
+            setTimeout(() => {
+                this.closeAllModals();
+            }, 100);
 
         } catch (error) {
             console.error('删除课程失败:', error);
             NotificationUtils.error('删除课程失败');
         }
+    }
+    
+    /**
+     * 关闭所有模态框
+     */
+    closeAllModals() {
+        console.log('关闭所有模态框...');
+        
+        // 获取所有模态框并关闭
+        const modals = [
+            '#modal-overlay',
+            '#course-modal', 
+            '#special-care-modal',
+            '#task-detail-modal',
+            '#add-task-modal'
+        ];
+        
+        modals.forEach(selector => {
+            const modal = DOMUtils.$(selector);
+            if (modal) {
+                modal.style.display = 'none';
+                // 移除可能的 flex 显示方式
+                modal.style.setProperty('display', 'none', 'important');
+                console.log(`已关闭模态框: ${selector}`);
+            }
+        });
+        
+        // 关闭所有具有 modal-overlay 类的元素
+        const allModalOverlays = document.querySelectorAll('.modal-overlay');
+        allModalOverlays.forEach(modal => {
+            modal.style.display = 'none';
+            modal.style.setProperty('display', 'none', 'important');
+        });
+        
+        // 使用ModalManager的hide方法
+        if (window.ModalManager) {
+            try {
+                const modalManager = new window.ModalManager();
+                modalManager.hide();
+            } catch (e) {
+                console.log('ModalManager.hide() error:', e);
+            }
+        }
+        
+        // 移除任何可能的 body 滚动锁定
+        document.body.style.overflow = '';
+        
+        console.log('所有模态框关闭完成');
     }
 
     /**
@@ -444,6 +588,9 @@ class DragDropManager {
             form.dataset.weekday = weekday;
             form.dataset.timeSlot = timeSlot;
             form.dataset.scheduleId = this.scheduleManager.currentSchedule.id;
+            // 清除编辑状态
+            form.dataset.isEditing = '';
+            form.dataset.courseId = '';
         }
 
         // 自动填入当前教师信息

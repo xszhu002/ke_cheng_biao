@@ -135,7 +135,7 @@
 .course-block {
     background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
     color: white;
-    padding: 6px 8px;
+    padding: 8px 8px;
     border-radius: 8px;
     cursor: move;
     user-select: none;
@@ -172,28 +172,39 @@
 }
 
 /* 课程块内容 */
+.course-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 6px;
+    overflow: hidden;
+    line-height: 1.2;
+    min-height: 14px;
+}
+
 .course-name {
     font-size: 11px;
     font-weight: 600;
-    margin-bottom: 1px;
-    line-height: 1.1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .course-classroom {
-    font-size: 9px;
-    opacity: 0.9;
-    background: rgba(255,255,255,0.2);
-    padding: 1px 3px;
-    border-radius: 2px;
-    margin-top: 1px;
+    font-size: 10px;
+    opacity: 0.95;
+    background: rgba(255,255,255,0.25);
+    padding: 1px 4px;
+    border-radius: 3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100%;
+    font-weight: 500;
+    flex: 0 0 auto;
+    min-width: 20px;
+    max-width: 40px;
 }
 
 /* 特需托管课程块 */
@@ -204,8 +215,11 @@
 }
 
 .course-block.special-care .course-classroom {
-    background: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.25);
     border-radius: 3px;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 1px 4px;
 }
 
 /* 不同课程类型的颜色 */
@@ -216,77 +230,69 @@
 
 /* 信息科技课程多彩样式 */
 .course-block.subject-info1 {
-    background: linear-gradient(135deg, #FF6B6B 0%, #EE5A52 100%);
-    box-shadow: 0 3px 6px rgba(255, 107, 107, 0.3);
+    background: linear-gradient(135deg, #F44336 0%, #D32F2F 100%);
+    box-shadow: 0 3px 6px rgba(244, 67, 54, 0.3);
     color: white;
 }
 
 .course-block.subject-info2 {
-    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
-    box-shadow: 0 3px 6px rgba(78, 205, 196, 0.3);
+    background: linear-gradient(135deg, #00BCD4 0%, #0097A7 100%);
+    box-shadow: 0 3px 6px rgba(0, 188, 212, 0.3);
     color: white;
 }
 
 .course-block.subject-info3 {
-    background: linear-gradient(135deg, #45B7D1 0%, #96CEB4 100%);
-    box-shadow: 0 3px 6px rgba(69, 183, 209, 0.3);
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    box-shadow: 0 3px 6px rgba(33, 150, 243, 0.3);
     color: white;
 }
 
 .course-block.subject-info4 {
-    background: linear-gradient(135deg, #FFA07A 0%, #FF8C69 100%);
-    box-shadow: 0 3px 6px rgba(255, 160, 122, 0.3);
+    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+    box-shadow: 0 3px 6px rgba(255, 152, 0, 0.3);
     color: white;
 }
 
 .course-block.subject-info5 {
-    background: linear-gradient(135deg, #98D8C8 0%, #F7DC6F 100%);
-    box-shadow: 0 3px 6px rgba(152, 216, 200, 0.3);
-    color: #2c3e50;
-}
-
-.course-block.subject-info6 {
-    background: linear-gradient(135deg, #BB8FCE 0%, #85C1E9 100%);
-    box-shadow: 0 3px 6px rgba(187, 143, 206, 0.3);
+    background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+    box-shadow: 0 3px 6px rgba(76, 175, 80, 0.3);
     color: white;
 }
 
+
+
 /* 信息科技课程的hover效果 */
 .course-block.subject-info1:hover {
-    background: linear-gradient(135deg, #FF5252 0%, #E53935 100%);
+    background: linear-gradient(135deg, #E53935 0%, #C62828 100%);
     transform: translateY(-2px);
-    box-shadow: 0 5px 12px rgba(255, 107, 107, 0.4);
+    box-shadow: 0 5px 12px rgba(244, 67, 54, 0.4);
 }
 
 .course-block.subject-info2:hover {
-    background: linear-gradient(135deg, #26C6DA 0%, #00ACC1 100%);
+    background: linear-gradient(135deg, #0097A7 0%, #006064 100%);
     transform: translateY(-2px);
-    box-shadow: 0 5px 12px rgba(78, 205, 196, 0.4);
+    box-shadow: 0 5px 12px rgba(0, 188, 212, 0.4);
 }
 
 .course-block.subject-info3:hover {
-    background: linear-gradient(135deg, #29B6F6 0%, #0288D1 100%);
+    background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
     transform: translateY(-2px);
-    box-shadow: 0 5px 12px rgba(69, 183, 209, 0.4);
+    box-shadow: 0 5px 12px rgba(33, 150, 243, 0.4);
 }
 
 .course-block.subject-info4:hover {
-    background: linear-gradient(135deg, #FF7043 0%, #FF5722 100%);
+    background: linear-gradient(135deg, #F57C00 0%, #E65100 100%);
     transform: translateY(-2px);
-    box-shadow: 0 5px 12px rgba(255, 160, 122, 0.4);
+    box-shadow: 0 5px 12px rgba(255, 152, 0, 0.4);
 }
 
 .course-block.subject-info5:hover {
-    background: linear-gradient(135deg, #81C784 0%, #66BB6A 100%);
+    background: linear-gradient(135deg, #388E3C 0%, #4CAF50 100%);
     transform: translateY(-2px);
-    box-shadow: 0 5px 12px rgba(152, 216, 200, 0.4);
+    box-shadow: 0 5px 12px rgba(76, 175, 80, 0.4);
 }
 
-.course-block.subject-info6:hover {
-    background: linear-gradient(135deg, #AB47BC 0%, #8E24AA 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 12px rgba(187, 143, 206, 0.4);
-}
+
 
 .course-block.subject-math {
     background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
@@ -627,12 +633,20 @@
         min-height: 50px;
     }
     
+    .course-info {
+        gap: 3px;
+        margin-bottom: 4px;
+        min-height: 12px;
+    }
+    
     .course-name {
         font-size: 10px;
     }
     
     .course-classroom {
         font-size: 9px;
+        max-width: 35px;
+        min-width: 16px;
     }
     
     .time-header {

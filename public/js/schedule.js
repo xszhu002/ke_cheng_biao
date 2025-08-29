@@ -13,6 +13,7 @@ class ScheduleManager {
         this.specialCare = [];
         this.isEditMode = false; // 编辑模式状态
         this.originalCourses = []; // 存储原始课程数据备份
+        this.infoTechColorIndex = 0; // 信息科技课程颜色索引
         
         // 时间段定义
         this.timeSlots = [
@@ -182,6 +183,8 @@ class ScheduleManager {
             this.courses = weekData.regularCourses || [];
             this.specialCare = weekData.specialCare || [];
             
+            // 注意：不再重置颜色索引，因为现在颜色基于课程ID分配，无需重置
+            
             // 渲染课程表
             this.renderScheduleTable();
             
@@ -260,7 +263,8 @@ class ScheduleManager {
             const tasks = await API.Task.getCourseTask(
                 this.currentSchedule.id, 
                 course.weekday, 
-                course.time_slot
+                course.time_slot,
+                this.currentTeacher?.id
             );
 
             // 清空现有图标
@@ -377,7 +381,7 @@ class ScheduleManager {
         const taskListEl = DOMUtils.$('#task-list');
         
         try {
-            const tasks = await API.Task.getCourseTask(scheduleId, weekday, timeSlot);
+            const tasks = await API.Task.getCourseTask(scheduleId, weekday, timeSlot, this.currentTeacher?.id);
             
             if (tasks.length === 0) {
                 taskListEl.innerHTML = `
@@ -477,7 +481,8 @@ class ScheduleManager {
             const tasks = await API.Task.getCourseTask(
                 this.currentTaskContext.scheduleId,
                 this.currentTaskContext.weekday,
-                this.currentTaskContext.timeSlot
+                this.currentTaskContext.timeSlot,
+                this.currentTeacher?.id
             );
             const task = tasks.find(t => t.id === taskId);
             
@@ -641,6 +646,8 @@ class ScheduleManager {
         }
     }
 
+
+
     /**
      * 为空时间槽加载任务图标
      */
@@ -653,9 +660,6 @@ class ScheduleManager {
         for (const slot of emptySlots) {
             const weekday = parseInt(slot.dataset.weekday);
             const timeSlot = parseInt(slot.dataset.timeSlot);
-            
-            // 跳过第9个时间段（特需托管）
-            if (timeSlot === 9) continue;
             
             const taskIconsContainer = slot.querySelector('.task-icons.empty-slot-tasks');
             if (taskIconsContainer) {
@@ -672,7 +676,8 @@ class ScheduleManager {
             const tasks = await API.Task.getCourseTask(
                 this.currentSchedule.id,
                 weekday,
-                timeSlot
+                timeSlot,
+                this.currentTeacher?.id
             );
             
             // 清空现有图标
@@ -825,7 +830,7 @@ class ScheduleManager {
         if (!timeSlot) return;
 
         const courseBlock = DOMUtils.createElement('div', {
-            className: `course-block subject-${this.getCourseSubject(course.course_name, course.weekday, course.time_slot)}`,
+            className: `course-block subject-${this.getCourseSubject(course.course_name, course.weekday, course.time_slot, course.id)}`,
             draggable: true,
             dataset: {
                 courseId: course.id,
@@ -833,6 +838,11 @@ class ScheduleManager {
                 timeSlot: course.time_slot,
                 courseType: course.course_type || 'regular'
             }
+        });
+
+        // 课程信息容器（水平布局）
+        const courseInfo = DOMUtils.createElement('div', {
+            className: 'course-info'
         });
 
         // 课程名称
@@ -865,10 +875,13 @@ class ScheduleManager {
             courseBlock.appendChild(deleteBtn);
         }
 
-        courseBlock.appendChild(courseName);
+        // 将课程名称和教室添加到水平布局容器
+        courseInfo.appendChild(courseName);
         if (course.classroom) {
-            courseBlock.appendChild(courseClassroom);
+            courseInfo.appendChild(courseClassroom);
         }
+
+        courseBlock.appendChild(courseInfo);
         courseBlock.appendChild(taskIcons);
 
         // 异步加载任务图标
@@ -883,6 +896,10 @@ class ScheduleManager {
         timeSlot.classList.remove('empty');
         timeSlot.classList.add('has-course');
     }
+
+
+
+
 
     /**
      * 渲染特需托管块
@@ -917,19 +934,48 @@ class ScheduleManager {
             }
         });
 
-        // 特需托管信息
+        // 特需托管信息容器（水平布局）
+        const careInfo = DOMUtils.createElement('div', {
+            className: 'course-info'
+        });
+
         const careName = DOMUtils.createElement('div', {
             className: 'course-name'
         }, care.course_name);
 
-        const careDate2 = DOMUtils.createElement('div', {
+        const careClassroom = DOMUtils.createElement('div', {
             className: 'course-classroom'
-        }, DateUtils.formatDate(careDate, 'MM-DD'));
+        }, care.classroom || '');
 
-        // 特需托管不提供删除功能
+        // 任务图标容器（特需托管也需要支持任务）
+        const taskIcons = DOMUtils.createElement('div', {
+            className: 'task-icons'
+        });
 
-        careBlock.appendChild(careName);
-        careBlock.appendChild(careDate2);
+        // 将特需托管名称和班级添加到水平布局容器
+        careInfo.appendChild(careName);
+        careInfo.appendChild(careClassroom);
+        
+        careBlock.appendChild(careInfo);
+        careBlock.appendChild(taskIcons);
+
+        // 特需托管使用自己时间槽的任务（和常规课程一样）
+        const courseForTask = {
+            weekday: adjustedWeekday,
+            time_slot: 9,
+            course_name: care.course_name
+        };
+        
+        console.log('特需托管任务图标加载参数:', {
+            careId: care.id,
+            careDate: care.specific_date,
+            originalWeekday: weekday,
+            adjustedWeekday: adjustedWeekday,
+            timeSlot: 9,
+            courseName: care.course_name
+        });
+        
+        this.loadCourseTaskIcons(courseForTask, taskIcons);
 
         timeSlot.appendChild(careBlock);
         timeSlot.classList.remove('empty');
@@ -939,7 +985,7 @@ class ScheduleManager {
     /**
      * 获取课程科目类型（支持多彩信息科技课程）
      */
-    getCourseSubject(courseName, weekday = null, timeSlot = null) {
+    getCourseSubject(courseName, weekday = null, timeSlot = null, courseId = null) {
         const subjectMap = {
             '数学': 'math',
             '语文': 'chinese',
@@ -959,34 +1005,76 @@ class ScheduleManager {
 
         // 信息科技课程使用多彩颜色
         if (courseName.includes('信息科技') || courseName.includes('信息技术') || courseName.includes('计算机')) {
-            return this.getInfoTechColorClass(weekday, timeSlot);
+            return this.getInfoTechColorClass(weekday, timeSlot, courseId);
         }
 
         return 'info'; // 默认
     }
 
     /**
-     * 为信息科技课程分配多彩颜色类（基于时间位置）
+     * 为信息科技课程分配多彩颜色类（基于课程ID固定颜色）
      */
-    getInfoTechColorClass(weekday, timeSlot) {
+    getInfoTechColorClass(weekday, timeSlot, courseId = null) {
         // 定义信息科技课程的多种颜色类
-        const infoTechColors = ['info1', 'info2', 'info3', 'info4', 'info5', 'info6'];
+        const infoTechColors = ['info1', 'info2', 'info3', 'info4', 'info5'];
         
-        // 如果有位置信息，基于位置计算颜色索引（这样颜色是稳定的）
-        if (weekday !== null && timeSlot !== null) {
-            const positionIndex = (weekday * 10 + timeSlot) % infoTechColors.length;
-            return infoTechColors[positionIndex];
+        // 如果有课程ID，基于课程ID分配固定颜色
+        if (courseId !== null && courseId !== undefined) {
+            // 使用课程ID的哈希值来分配颜色，确保颜色分布更均匀
+            const hash = this.hashCode(courseId.toString());
+            const colorIndex = Math.abs(hash) % infoTechColors.length;
+            return infoTechColors[colorIndex];
         }
         
-        // 如果没有位置信息，使用计数器方式
-        if (!this.infoTechColorIndex) {
-            this.infoTechColorIndex = 0;
+        // 如果没有课程ID，使用更智能的分配方式
+        // 查看当前已有的信息科技课程，选择使用最少的颜色
+        return this.getNextAvailableInfoColor();
+    }
+
+    /**
+     * 简单的字符串哈希函数
+     */
+    hashCode(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // 转换为32位整数
+        }
+        return hash;
+    }
+
+    /**
+     * 获取下一个可用的信息科技颜色
+     */
+    getNextAvailableInfoColor() {
+        const infoTechColors = ['info1', 'info2', 'info3', 'info4', 'info5'];
+        
+        // 统计当前已使用的颜色
+        const usedColors = {};
+        const courseBlocks = document.querySelectorAll('.course-block[class*="subject-info"]');
+        
+        courseBlocks.forEach(block => {
+            for (let i = 1; i <= 5; i++) {
+                if (block.classList.contains(`subject-info${i}`)) {
+                    usedColors[`info${i}`] = (usedColors[`info${i}`] || 0) + 1;
+                }
+            }
+        });
+        
+        // 找到使用次数最少的颜色
+        let minUsage = Infinity;
+        let selectedColor = infoTechColors[0];
+        
+        for (const color of infoTechColors) {
+            const usage = usedColors[color] || 0;
+            if (usage < minUsage) {
+                minUsage = usage;
+                selectedColor = color;
+            }
         }
         
-        const colorClass = infoTechColors[this.infoTechColorIndex % infoTechColors.length];
-        this.infoTechColorIndex++;
-        
-        return colorClass;
+        return selectedColor;
     }
 
     /**
@@ -1222,6 +1310,16 @@ class ScheduleManager {
     }
 
     /**
+     * 清空课程详情面板
+     */
+    clearCourseDetails() {
+        const detailsContainer = DOMUtils.$('#course-details');
+        if (detailsContainer) {
+            detailsContainer.innerHTML = '<p>点击课程查看详情</p>';
+        }
+    }
+
+    /**
      * 进入编辑模式
      */
     async enterEditMode() {
@@ -1233,6 +1331,9 @@ class ScheduleManager {
             
             this.isEditMode = true;
             this.updateEditModeUI();
+            
+            // 清空课程详情面板
+            this.clearCourseDetails();
             
             NotificationUtils.info('已进入编辑模式，可以添加、编辑、删除课程');
             
@@ -1251,6 +1352,9 @@ class ScheduleManager {
         this.isEditMode = false;
         this.originalCourses = [];
         this.updateEditModeUI();
+        
+        // 清空课程详情面板
+        this.clearCourseDetails();
         
         // 重新加载普通课程表视图
         this.loadWeekSchedule();

@@ -228,6 +228,15 @@ const CourseAPI = {
     },
 
     /**
+     * 更新课程
+     * @param {number} id 课程ID
+     * @param {Object} courseData 课程数据
+     */
+    async update(id, courseData) {
+        return apiClient.put(`/courses/${id}`, courseData);
+    },
+
+    /**
      * 删除课程
      * @param {number} id 课程ID
      */
@@ -541,8 +550,12 @@ const TaskAPI = {
     /**
      * 获取课程相关任务
      */
-    async getCourseTask(scheduleId, weekday, timeSlot) {
-        return await apiClient.get(`/tasks/course/${scheduleId}/${weekday}/${timeSlot}`);
+    async getCourseTask(scheduleId, weekday, timeSlot, teacherId = null) {
+        let url = `/tasks/course/${scheduleId}/${weekday}/${timeSlot}`;
+        if (teacherId) {
+            url += `?teacherId=${teacherId}`;
+        }
+        return await apiClient.get(url);
     },
 
     /**

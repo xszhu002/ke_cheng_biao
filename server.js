@@ -368,6 +368,62 @@ app.put('/api/courses/:id/move', (req, res) => {
     });
 });
 
+// 更新课程
+app.put('/api/courses/:id', (req, res) => {
+    const courseId = req.params.id;
+    const { courseName, classroom, teacher, notes } = req.body;
+    
+    console.log('收到更新课程请求:', { courseId, courseName, classroom, teacher, notes });
+    
+    // 验证参数
+    if (!courseName) {
+        res.status(400).json({ error: '课程名称不能为空' });
+        return;
+    }
+    
+    // 获取原始数据以记录操作历史
+    const getOldDataSql = 'SELECT * FROM course_arrangements WHERE id = ?';
+    req.db.get(getOldDataSql, [courseId], (err, oldData) => {
+        if (err) {
+            console.error('获取原始数据失败:', err.message);
+            res.status(500).json({ error: '更新课程失败' });
+            return;
+        }
+        
+        if (!oldData) {
+            res.status(404).json({ error: '课程不存在' });
+            return;
+        }
+        
+        // 更新课程信息
+        const updateSql = `
+            UPDATE course_arrangements 
+            SET course_name = ?, classroom = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `;
+        
+        req.db.run(updateSql, [courseName, classroom, notes, courseId], function(updateErr) {
+            if (updateErr) {
+                console.error('更新课程失败:', updateErr.message);
+                res.status(500).json({ error: '更新课程失败: ' + updateErr.message });
+                return;
+            }
+            
+            if (this.changes === 0) {
+                res.status(404).json({ error: '课程不存在' });
+                return;
+            }
+            
+            console.log(`成功更新课程 ID: ${courseId}`);
+            res.json({ 
+                message: '课程更新成功',
+                changes: this.changes,
+                courseId: courseId
+            });
+        });
+    });
+});
+
 app.delete('/api/courses/:id', (req, res) => {
     const courseId = req.params.id;
     
@@ -1512,8 +1568,18 @@ app.use((err, req, res, next) => {
 // 获取课程相关任务
 app.get('/api/tasks/course/:scheduleId/:weekday/:timeSlot', (req, res) => {
     const { scheduleId, weekday, timeSlot } = req.params;
+    const { teacherId } = req.query; // 从查询参数获取教师ID
     
-    const sql = `
+    console.log('获取课程任务:', { 
+        scheduleId: scheduleId, 
+        weekday: weekday, 
+        timeSlot: timeSlot, 
+        teacherId: teacherId,
+        weekdayType: typeof weekday,
+        timeSlotType: typeof timeSlot
+    });
+    
+    let sql = `
         SELECT t.*, 
                CASE 
                    WHEN t.priority = 1 THEN 'high'
@@ -1524,14 +1590,27 @@ app.get('/api/tasks/course/:scheduleId/:weekday/:timeSlot', (req, res) => {
         WHERE t.schedule_id = ? 
           AND (t.weekday = ? AND t.time_slot = ?)
           AND t.status != 'completed'
-        ORDER BY t.priority, t.due_date
     `;
     
-    req.db.all(sql, [scheduleId, weekday, timeSlot], (err, rows) => {
+    const params = [scheduleId, weekday, timeSlot];
+    
+    // 如果提供了教师ID，只显示该教师的任务
+    if (teacherId) {
+        sql += ' AND t.teacher_id = ?';
+        params.push(teacherId);
+    }
+    
+    sql += ' ORDER BY t.priority, t.due_date';
+    
+    console.log('执行查询SQL:', sql);
+    console.log('查询参数:', params);
+    
+    req.db.all(sql, params, (err, rows) => {
         if (err) {
             console.error('获取课程任务失败:', err.message);
             res.status(500).json({ error: '获取任务失败' });
         } else {
+            console.log('返回任务数量:', rows?.length || 0);
             res.json(rows || []);
         }
     });

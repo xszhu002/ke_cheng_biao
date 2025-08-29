@@ -453,6 +453,10 @@
             const form = document.getElementById('course-form');
             
             try {
+                // 检查是否为编辑模式
+                const isEditing = form.dataset.isEditing === 'true';
+                const courseId = form.dataset.courseId;
+                
                 // 直接获取表单字段的值
                 const scheduleId = parseInt(form.dataset.scheduleId);
                 const weekday = parseInt(form.dataset.weekday);
@@ -462,24 +466,42 @@
                 const teacher = form.querySelector('#course-teacher').value;
                 const notes = form.querySelector('#course-notes').value;
                 
-                console.log('表单数据:', { scheduleId, weekday, timeSlot, courseName, classroom, teacher, notes });
+                console.log('表单数据:', { isEditing, courseId, scheduleId, weekday, timeSlot, courseName, classroom, teacher, notes });
                 
-                const courseData = {
-                    scheduleId,
-                    weekday,
-                    timeSlot,
-                    courseName,
-                    classroom,
-                    teacher,
-                    notes,
-                    isEditMode: window.app.scheduleManager.isEditMode
-                };
-                
-                await API.Course.create(courseData);
-                NotificationUtils.success('课程添加成功');
+                if (isEditing && courseId) {
+                    // 编辑模式：更新课程
+                    const updateData = {
+                        courseName,
+                        classroom,
+                        teacher,
+                        notes
+                    };
+                    
+                    await API.Course.update(courseId, updateData);
+                    NotificationUtils.success('课程更新成功');
+                } else {
+                    // 添加模式：创建新课程
+                    const courseData = {
+                        scheduleId,
+                        weekday,
+                        timeSlot,
+                        courseName,
+                        classroom,
+                        teacher,
+                        notes,
+                        isEditMode: window.app.scheduleManager.isEditMode
+                    };
+                    
+                    await API.Course.create(courseData);
+                    NotificationUtils.success('课程添加成功');
+                }
                 
                 // 关闭模态框
                 document.getElementById('course-modal').style.display = 'none';
+                
+                // 清理编辑状态
+                form.dataset.isEditing = '';
+                form.dataset.courseId = '';
                 
                 // 重新加载课程表
                 if (window.app && window.app.scheduleManager) {
@@ -493,8 +515,8 @@
                 }
                 
             } catch (error) {
-                console.error('添加课程失败:', error);
-                NotificationUtils.error('添加课程失败: ' + error.message);
+                console.error('课程操作失败:', error);
+                NotificationUtils.error('课程操作失败: ' + error.message);
             }
         }
         

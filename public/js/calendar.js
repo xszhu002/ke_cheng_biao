@@ -242,6 +242,20 @@ class CalendarManager {
     }
 
     /**
+     * 获取删除按钮HTML（针对特需托管）
+     */
+    getDeleteButtonHtml(careId) {
+        // 如果不在编辑模式，不显示删除按钮
+        if (!this.scheduleManager.isEditMode) {
+            return '<span style="font-size: 10px; color: #999;">编辑模式下可删除</span>';
+        }
+        
+        // 编辑模式下显示删除按钮
+        return `<button class="btn btn-outline" style="font-size: 11px; padding: 2px 6px;" 
+                        onclick="calendarManager.deleteSpecialCare(${careId})">删除</button>`;
+    }
+
+    /**
      * 显示特需托管详情
      */
     showSpecialCareDetails(dateStr) {
@@ -261,8 +275,7 @@ class CalendarManager {
                 <div class="special-care-actions">
                     <button class="btn btn-outline" style="font-size: 11px; padding: 2px 6px;" 
                             onclick="calendarManager.editSpecialCare(${care.id})">编辑</button>
-                    <button class="btn btn-outline" style="font-size: 11px; padding: 2px 6px;" 
-                            onclick="calendarManager.deleteSpecialCare(${care.id})">删除</button>
+                    ${this.getDeleteButtonHtml(care.id)}
                 </div>
             </div>
         `).join('');
@@ -404,6 +417,9 @@ class CalendarManager {
             await API.SpecialCare.delete(careId);
             NotificationUtils.success('特需托管删除成功');
             
+            // 关闭当前模态框
+            this.closeCurrentModal();
+            
             // 重新加载数据
             await this.loadSpecialCareDates();
             this.renderCalendar();
@@ -414,6 +430,33 @@ class CalendarManager {
         } catch (error) {
             console.error('删除特需托管失败:', error);
             NotificationUtils.error('删除特需托管失败');
+        }
+    }
+    
+    /**
+     * 关闭当前模态框
+     */
+    closeCurrentModal() {
+        // 关闭通用模态框
+        const modalOverlay = document.querySelector('#modal-overlay');
+        if (modalOverlay) {
+            modalOverlay.style.display = 'none';
+        }
+        
+        // 关闭所有模态框
+        const allModals = document.querySelectorAll('.modal-overlay');
+        allModals.forEach(modal => {
+            modal.style.display = 'none';
+        });
+        
+        // 使用ModalManager关闭
+        if (window.ModalManager) {
+            try {
+                const modalManager = new window.ModalManager();
+                modalManager.hide();
+            } catch (e) {
+                console.log('ModalManager.hide() error:', e);
+            }
         }
     }
 
