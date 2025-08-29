@@ -264,7 +264,6 @@ body {
     align-self: flex-start;
     display: flex;
     flex-direction: column;
-    height: fit-content;
 }
 
 .panel-section {
@@ -279,7 +278,8 @@ body {
     flex-direction: column;
     overflow: hidden;
     min-height: 400px;
-    max-height: 600px;
+    /* 高度将通过JavaScript动态设置 */
+    /* 确保待办事项区域始终填满可用空间 */
 }
 
 .panel-section h3 {
@@ -725,6 +725,8 @@ body {
     flex: 1;
     overflow-y: auto;
     padding-right: 4px;
+    min-height: 0; /* 允许flex子元素收缩 */
+    /* 高度将通过JavaScript动态设置 */
 }
 
 .todo-loading {
@@ -732,6 +734,21 @@ body {
     color: #6c757d;
     font-style: italic;
     padding: 20px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.todo-empty {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    padding: 20px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .todo-item {

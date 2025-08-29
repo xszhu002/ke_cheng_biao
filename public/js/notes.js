@@ -143,6 +143,11 @@ class WeeklyNotesManager {
         // 设置编辑器内容
         textarea.value = this.originalContent;
         textarea.focus();
+        
+        // 调整布局高度
+        setTimeout(() => {
+            this.adjustLayoutHeight();
+        }, 50);
     }
 
     /**
@@ -161,6 +166,11 @@ class WeeklyNotesManager {
         preview.style.display = 'block';
         viewButtons.classList.remove('hidden');
         editButtons.classList.add('hidden');
+        
+        // 调整布局高度
+        setTimeout(() => {
+            this.adjustLayoutHeight();
+        }, 50);
     }
 
     /**
@@ -169,6 +179,9 @@ class WeeklyNotesManager {
     cancelEdit() {
         this.exitEditMode();
         this.renderPreview();
+        
+        // 调整右侧面板高度
+        this.adjustLayoutHeight();
     }
 
     /**
@@ -199,6 +212,9 @@ class WeeklyNotesManager {
             this.exitEditMode();
             this.renderPreview();
             
+            // 调整右侧面板高度
+            this.adjustLayoutHeight();
+            
             NotificationUtils.success('保存成功');
             
         } catch (error) {
@@ -220,6 +236,20 @@ class WeeklyNotesManager {
             const html = MarkdownUtils.parse(this.originalContent);
             contentDiv.innerHTML = html;
             contentDiv.classList.remove('empty');
+        }
+        
+        // 延迟调整布局，确保内容已渲染
+        setTimeout(() => {
+            this.adjustLayoutHeight();
+        }, 50);
+    }
+
+    /**
+     * 调整布局高度
+     */
+    adjustLayoutHeight() {
+        if (window.app && typeof window.app.adjustRightPanelHeight === 'function') {
+            window.app.adjustRightPanelHeight();
         }
     }
 

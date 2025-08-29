@@ -1466,6 +1466,9 @@ class ScheduleManager {
             
             // 初始化标签页切换事件
             this.initTodoTabs();
+            
+            // 调整布局高度
+            this.adjustLayoutHeight();
 
         } catch (error) {
             console.error('加载待办事项失败:', error);
@@ -1495,6 +1498,20 @@ class ScheduleManager {
             const todoItem = this.createTodoItem(task);
             todoListContainer.appendChild(todoItem);
         });
+        
+        // 渲染完成后调整布局
+        setTimeout(() => {
+            this.adjustLayoutHeight();
+        }, 50);
+    }
+
+    /**
+     * 调整布局高度
+     */
+    adjustLayoutHeight() {
+        if (window.app && typeof window.app.adjustRightPanelHeight === 'function') {
+            window.app.adjustRightPanelHeight();
+        }
     }
 
     /**

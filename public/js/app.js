@@ -38,6 +38,19 @@ class ScheduleApp {
             // 绑定全局事件
             this.bindGlobalEvents();
 
+            // 初始化布局调整 - 多次调用确保布局正确
+            setTimeout(() => {
+                this.adjustRightPanelHeight();
+            }, 100);
+            
+            setTimeout(() => {
+                this.adjustRightPanelHeight();
+            }, 500);
+            
+            setTimeout(() => {
+                this.adjustRightPanelHeight();
+            }, 1000);
+
             this.isInitialized = true;
             console.log('课程表应用初始化完成');
 
@@ -143,6 +156,60 @@ class ScheduleApp {
     handleWindowResize() {
         // 可以在这里处理响应式布局调整
         console.log('窗口大小调整');
+        this.adjustRightPanelHeight();
+    }
+
+    /**
+     * 调整右侧面板高度与左侧区域对齐
+     */
+    adjustRightPanelHeight() {
+        try {
+            const leftMainArea = document.querySelector('.left-main-area');
+            const rightPanel = document.querySelector('.right-panel');
+            const todoSection = document.querySelector('.right-panel .panel-section:last-child');
+            
+            if (!leftMainArea || !rightPanel || !todoSection) {
+                console.log('布局调整失败：无法找到必要的DOM元素', {
+                    leftMainArea: !!leftMainArea,
+                    rightPanel: !!rightPanel,
+                    todoSection: !!todoSection
+                });
+                return;
+            }
+
+            // 等待DOM完全渲染
+            setTimeout(() => {
+                // 计算左侧区域的总高度
+                const leftAreaHeight = leftMainArea.offsetHeight;
+                
+                // 计算右侧面板中课程详情部分的高度
+                const courseDetailSection = document.querySelector('.right-panel .panel-section:first-child');
+                const courseDetailHeight = courseDetailSection ? courseDetailSection.offsetHeight : 0;
+                
+                // 计算待办事项区域应该的高度（左侧高度 - 课程详情高度 - 边框间距）
+                const todoAreaHeight = Math.max(400, leftAreaHeight - courseDetailHeight - 2);
+                
+                // 设置待办事项区域固定高度，确保始终与随手记对齐
+                todoSection.style.height = `${todoAreaHeight}px`;
+                todoSection.style.maxHeight = `${todoAreaHeight}px`;
+                todoSection.style.minHeight = `${todoAreaHeight}px`;
+                
+                // 确保待办事项列表能够显示滚动条
+                const todoList = document.querySelector('.todo-list');
+                if (todoList) {
+                    const listMaxHeight = Math.max(200, todoAreaHeight - 100); // 减去标题和tab按钮的高度，最小200px
+                    todoList.style.height = `${listMaxHeight}px`;
+                    todoList.style.maxHeight = `${listMaxHeight}px`;
+                    todoList.style.minHeight = `${listMaxHeight}px`;
+                }
+                
+                console.log(`✅ 布局调整完成: 左侧=${leftAreaHeight}px, 课程详情=${courseDetailHeight}px, 待办事项=${todoAreaHeight}px`);
+                
+            }, 100);
+            
+        } catch (error) {
+            console.error('调整右侧面板高度失败:', error);
+        }
     }
 
     /**
