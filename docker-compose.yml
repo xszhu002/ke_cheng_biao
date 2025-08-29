@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  schedule-app:
+    image: ghcr.io/xszhu002/ke_cheng_biao:latest
+    container_name: schedule-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      # 持久化数据库文件
+      - schedule_data:/app/database
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  schedule_data:
+    driver: local 
