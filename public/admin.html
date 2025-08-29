@@ -1364,7 +1364,7 @@
             async init() {
                 await this.checkAdminStatus();
                 this.bindEvents();
-                this.bindTabEvents();
+                // bindTabEvents 将在显示后台界面时调用
                 this.bindModalEvents();
             }
 
@@ -1476,8 +1476,60 @@
                 if (dashboardContainer) {
                     dashboardContainer.style.display = 'block';
                     dashboardContainer.classList.add('active'); // 添加active类启用点击事件
-                    console.log('后台容器已显示');
+                    
+                    // 强制设置pointer-events以确保可以交互（使用!important级别的优先级）
+                    dashboardContainer.style.pointerEvents = 'auto';
+                    dashboardContainer.style.setProperty('pointer-events', 'auto', 'important');
+                    dashboardContainer.style.zIndex = '100'; // 确保在最上层
+                    dashboardContainer.classList.remove('hidden'); // 移除可能的隐藏类
+                    
+                    console.log('后台容器已显示，classList:', dashboardContainer.className);
+                    console.log('pointer-events样式:', getComputedStyle(dashboardContainer).pointerEvents);
+                    console.log('z-index样式:', getComputedStyle(dashboardContainer).zIndex);
+                    
+                    // 确保DOM完全渲染后再初始化导航（多次尝试确保绑定成功）
+                    this.ensureNavigationBinding();
                 }
+            }
+            
+            // 确保导航绑定成功
+            ensureNavigationBinding() {
+                var self = this;
+                var attempts = 0;
+                var maxAttempts = 5;
+                
+                var tryBinding = function() {
+                    attempts++;
+                    console.log('尝试绑定导航事件 (' + attempts + '/' + maxAttempts + ')...');
+                    
+                    var navItems = document.querySelectorAll('.nav-item');
+                    console.log('找到 ' + navItems.length + ' 个导航项');
+                    
+                    if (navItems.length > 0) {
+                        // 检查导航项的pointer-events样式
+                        console.log('第一个导航项的pointer-events:', getComputedStyle(navItems[0]).pointerEvents);
+                        console.log('后台容器的pointer-events:', getComputedStyle(document.getElementById('admin-dashboard')).pointerEvents);
+                        
+                        self.bindTabEvents();
+                        console.log('导航事件绑定成功');
+                        return true;
+                    } else {
+                        console.log('导航项未找到，等待DOM渲染...');
+                        if (attempts < maxAttempts) {
+                            setTimeout(tryBinding, 200);
+                        } else {
+                            console.error('导航事件绑定失败：超过最大尝试次数');
+                        }
+                        return false;
+                    }
+                };
+                
+                // 立即尝试一次
+                setTimeout(tryBinding, 50);
+            }
+
+            populateSettings() {
+                console.log('填充设置值...', this.settings);
                 
                 // 显示管理员信息
                 const usernameEl = document.getElementById('admin-username');
@@ -1494,10 +1546,6 @@
                     const lastLogin = new Date(this.currentAdmin.last_login).toLocaleString('zh-CN');
                     lastLoginEl.textContent = lastLogin;
                 }
-            }
-
-            populateSettings() {
-                console.log('填充设置值...', this.settings);
                 
                 // 填充设置值
                 Object.keys(this.settings).forEach(key => {
@@ -1785,26 +1833,81 @@
 
             // 绑定标签页事件
             bindTabEvents() {
+                console.log('开始绑定标签页事件...');
                 const navItems = document.querySelectorAll('.nav-item');
-                navItems.forEach(item => {
-                    item.addEventListener('click', () => {
-                        const tabName = item.dataset.tab;
+                console.log('找到导航项数量:', navItems.length);
+                
+                navItems.forEach((item, index) => {
+                    console.log(`绑定导航项 ${index}:`, item.dataset.tab);
+                    
+                    // 移除可能存在的旧事件监听器
+                    const newItem = item.cloneNode(true);
+                    item.parentNode.replaceChild(newItem, item);
+                    
+                    // 添加新的事件监听器
+                    newItem.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const tabName = newItem.dataset.tab;
+                        console.log('点击导航项:', tabName);
                         this.switchTab(tabName);
                     });
                 });
+                
+                console.log('标签页事件绑定完成');
+                
+                // 确保所有内容区域都存在并初始化显示
+                this.initializeContentSections();
+            }
+
+            // 初始化内容区域
+            initializeContentSections() {
+                console.log('初始化内容区域...');
+                
+                const sections = ['settings', 'teachers', 'semesters', 'schedules'];
+                sections.forEach(sectionName => {
+                    const sectionId = `${sectionName}-section`;
+                    let section = document.getElementById(sectionId);
+                    
+                    if (section) {
+                        console.log(`找到内容区域: ${sectionId}`);
+                        // 确保section在.main-body中
+                        const mainBody = document.querySelector('.main-body');
+                        if (mainBody && section.parentElement !== mainBody) {
+                            mainBody.appendChild(section);
+                            console.log(`已将 ${sectionId} 移入 .main-body`);
+                        }
+                    } else {
+                        console.error(`未找到内容区域: ${sectionId}`);
+                    }
+                });
+                
+                // 初始显示第一个tab（settings）
+                this.switchTab('settings');
             }
 
             // 切换标签页
             switchTab(tabName) {
+                console.log('切换标签页:', tabName);
+                
                 // 更新导航项状态
                 document.querySelectorAll('.nav-item').forEach(item => {
                     item.classList.remove('active');
                 });
-                document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+                
+                const targetNavItem = document.querySelector(`[data-tab="${tabName}"]`);
+                if (targetNavItem) {
+                    targetNavItem.classList.add('active');
+                    console.log(`导航项 ${tabName} 已设置为 active`);
+                } else {
+                    console.error(`未找到导航项: [data-tab="${tabName}"]`);
+                }
 
                 // 更新内容区域
                 document.querySelectorAll('.content-section').forEach(section => {
                     section.classList.remove('active');
+                    section.style.display = 'none';
                 });
                 
                 const targetSection = document.getElementById(`${tabName}-section`);
@@ -1819,7 +1922,12 @@
                     }
                     
                     targetSection.classList.add('active');
+                    targetSection.style.display = 'block';
                     console.log(`${tabName}-section 已设置为 active，当前类名:`, targetSection.className);
+                    
+                    // 强制重新布局
+                    targetSection.offsetHeight; // 触发重排
+                    
                 } else {
                     console.error(`未找到元素: ${tabName}-section`);
                 }
@@ -1831,35 +1939,104 @@
                     'semesters': '学期管理',
                     'schedules': '课程表管理'
                 };
-                document.getElementById('main-title').textContent = titles[tabName] || '管理后台';
+                const titleElement = document.getElementById('main-title');
+                if (titleElement) {
+                    titleElement.textContent = titles[tabName] || '管理后台';
+                }
 
                 // 更新操作按钮
                 const actionsContainer = document.getElementById('main-actions');
-                actionsContainer.innerHTML = '';
-                
-                if (tabName === 'teachers') {
-                    actionsContainer.innerHTML = '<button id="add-teacher-btn-header" class="btn btn-primary btn-sm">添加教师</button>';
-                } else if (tabName === 'semesters') {
-                    actionsContainer.innerHTML = '<button id="add-semester-btn-header" class="btn btn-primary btn-sm">添加学期</button>';
-                } else if (tabName === 'schedules') {
-                    actionsContainer.innerHTML = `
-                        <label style="margin-right: 15px; display: flex; align-items: center; gap: 8px; font-size: 14px;">
-                            <input type="checkbox" id="include-archived-header"> 显示已归档
-                        </label>
-                        <button id="add-schedule-btn-header" class="btn btn-primary btn-sm">添加课程表</button>
-                    `;
+                if (actionsContainer) {
+                    actionsContainer.innerHTML = '';
+                    
+                    if (tabName === 'teachers') {
+                        actionsContainer.innerHTML = '<button id="add-teacher-btn-header" class="btn btn-primary btn-sm">添加教师</button>';
+                        // 重新绑定添加教师按钮事件
+                        setTimeout(() => {
+                            const addBtn = document.getElementById('add-teacher-btn-header');
+                            if (addBtn) {
+                                addBtn.addEventListener('click', () => this.showTeacherModal());
+                            }
+                        }, 10);
+                    } else if (tabName === 'semesters') {
+                        actionsContainer.innerHTML = '<button id="add-semester-btn-header" class="btn btn-primary btn-sm">添加学期</button>';
+                        // 重新绑定添加学期按钮事件
+                        setTimeout(() => {
+                            const addBtn = document.getElementById('add-semester-btn-header');
+                            if (addBtn) {
+                                addBtn.addEventListener('click', () => this.showSemesterModal());
+                            }
+                        }, 10);
+                    } else if (tabName === 'schedules') {
+                        actionsContainer.innerHTML = `
+                            <label style="margin-right: 15px; display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                                <input type="checkbox" id="include-archived-header"> 显示已归档
+                            </label>
+                            <button id="add-schedule-btn-header" class="btn btn-primary btn-sm">添加课程表</button>
+                        `;
+                        // 重新绑定相关事件
+                        setTimeout(() => {
+                            const includeArchived = document.getElementById('include-archived-header');
+                            const addBtn = document.getElementById('add-schedule-btn-header');
+                            
+                            if (includeArchived) {
+                                includeArchived.addEventListener('change', () => this.loadSchedules());
+                            }
+                            if (addBtn) {
+                                addBtn.addEventListener('click', () => this.showScheduleModal());
+                            }
+                        }, 10);
+                    }
                 }
-
-                // 绑定新按钮事件
-                this.bindHeaderActions(tabName);
-
-                // 加载对应数据
-                if (tabName === 'teachers') {
-                    this.loadTeachers();
-                } else if (tabName === 'semesters') {
-                    this.loadSemesters();
-                } else if (tabName === 'schedules') {
-                    this.loadSchedules();
+                
+                // 根据不同标签页加载相应数据
+                this.loadTabData(tabName);
+            }
+            
+            // 加载设置数据
+            async loadSettings() {
+                console.log('加载设置数据...');
+                try {
+                    // 获取系统设置
+                    const response = await fetch('/api/admin/settings');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const settingsArray = await response.json();
+                    
+                    // 转换设置数组为对象
+                    this.settings = {};
+                    settingsArray.forEach(setting => {
+                        this.settings[setting.setting_key] = setting.setting_value;
+                    });
+                    
+                    console.log('设置数据加载完成:', this.settings);
+                    this.populateSettings();
+                } catch (error) {
+                    console.error('加载设置失败:', error);
+                    // 不显示alert，避免打断用户操作
+                }
+            }
+            
+            // 加载标签页数据
+            loadTabData(tabName) {
+                console.log('加载标签页数据:', tabName);
+                
+                switch (tabName) {
+                    case 'settings':
+                        this.loadSettings();
+                        break;
+                    case 'teachers':
+                        this.loadTeachers();
+                        break;
+                    case 'semesters':
+                        this.loadSemesters();
+                        break;
+                    case 'schedules':
+                        this.loadSchedules();
+                        break;
+                    default:
+                        console.log('未知的标签页:', tabName);
                 }
             }
 
