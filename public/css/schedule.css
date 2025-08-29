@@ -214,6 +214,80 @@
     box-shadow: 0 3px 6px rgba(52, 152, 219, 0.3);
 }
 
+/* 信息科技课程多彩样式 */
+.course-block.subject-info1 {
+    background: linear-gradient(135deg, #FF6B6B 0%, #EE5A52 100%);
+    box-shadow: 0 3px 6px rgba(255, 107, 107, 0.3);
+    color: white;
+}
+
+.course-block.subject-info2 {
+    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    box-shadow: 0 3px 6px rgba(78, 205, 196, 0.3);
+    color: white;
+}
+
+.course-block.subject-info3 {
+    background: linear-gradient(135deg, #45B7D1 0%, #96CEB4 100%);
+    box-shadow: 0 3px 6px rgba(69, 183, 209, 0.3);
+    color: white;
+}
+
+.course-block.subject-info4 {
+    background: linear-gradient(135deg, #FFA07A 0%, #FF8C69 100%);
+    box-shadow: 0 3px 6px rgba(255, 160, 122, 0.3);
+    color: white;
+}
+
+.course-block.subject-info5 {
+    background: linear-gradient(135deg, #98D8C8 0%, #F7DC6F 100%);
+    box-shadow: 0 3px 6px rgba(152, 216, 200, 0.3);
+    color: #2c3e50;
+}
+
+.course-block.subject-info6 {
+    background: linear-gradient(135deg, #BB8FCE 0%, #85C1E9 100%);
+    box-shadow: 0 3px 6px rgba(187, 143, 206, 0.3);
+    color: white;
+}
+
+/* 信息科技课程的hover效果 */
+.course-block.subject-info1:hover {
+    background: linear-gradient(135deg, #FF5252 0%, #E53935 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(255, 107, 107, 0.4);
+}
+
+.course-block.subject-info2:hover {
+    background: linear-gradient(135deg, #26C6DA 0%, #00ACC1 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(78, 205, 196, 0.4);
+}
+
+.course-block.subject-info3:hover {
+    background: linear-gradient(135deg, #29B6F6 0%, #0288D1 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(69, 183, 209, 0.4);
+}
+
+.course-block.subject-info4:hover {
+    background: linear-gradient(135deg, #FF7043 0%, #FF5722 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(255, 160, 122, 0.4);
+}
+
+.course-block.subject-info5:hover {
+    background: linear-gradient(135deg, #81C784 0%, #66BB6A 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(152, 216, 200, 0.4);
+}
+
+.course-block.subject-info6:hover {
+    background: linear-gradient(135deg, #AB47BC 0%, #8E24AA 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(187, 143, 206, 0.4);
+}
+
 .course-block.subject-math {
     background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
     box-shadow: 0 3px 6px rgba(231, 76, 60, 0.3);

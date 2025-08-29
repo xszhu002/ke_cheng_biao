@@ -825,7 +825,7 @@ class ScheduleManager {
         if (!timeSlot) return;
 
         const courseBlock = DOMUtils.createElement('div', {
-            className: `course-block subject-${this.getCourseSubject(course.course_name)}`,
+            className: `course-block subject-${this.getCourseSubject(course.course_name, course.weekday, course.time_slot)}`,
             draggable: true,
             dataset: {
                 courseId: course.id,
@@ -937,11 +937,10 @@ class ScheduleManager {
     }
 
     /**
-     * 获取课程科目类型
+     * 获取课程科目类型（支持多彩信息科技课程）
      */
-    getCourseSubject(courseName) {
+    getCourseSubject(courseName, weekday = null, timeSlot = null) {
         const subjectMap = {
-            '信息科技': 'info',
             '数学': 'math',
             '语文': 'chinese',
             '英语': 'english',
@@ -951,13 +950,43 @@ class ScheduleManager {
             '音乐': 'music'
         };
 
+        // 优先检查非信息科技课程
         for (const [subject, className] of Object.entries(subjectMap)) {
             if (courseName.includes(subject)) {
                 return className;
             }
         }
 
+        // 信息科技课程使用多彩颜色
+        if (courseName.includes('信息科技') || courseName.includes('信息技术') || courseName.includes('计算机')) {
+            return this.getInfoTechColorClass(weekday, timeSlot);
+        }
+
         return 'info'; // 默认
+    }
+
+    /**
+     * 为信息科技课程分配多彩颜色类（基于时间位置）
+     */
+    getInfoTechColorClass(weekday, timeSlot) {
+        // 定义信息科技课程的多种颜色类
+        const infoTechColors = ['info1', 'info2', 'info3', 'info4', 'info5', 'info6'];
+        
+        // 如果有位置信息，基于位置计算颜色索引（这样颜色是稳定的）
+        if (weekday !== null && timeSlot !== null) {
+            const positionIndex = (weekday * 10 + timeSlot) % infoTechColors.length;
+            return infoTechColors[positionIndex];
+        }
+        
+        // 如果没有位置信息，使用计数器方式
+        if (!this.infoTechColorIndex) {
+            this.infoTechColorIndex = 0;
+        }
+        
+        const colorClass = infoTechColors[this.infoTechColorIndex % infoTechColors.length];
+        this.infoTechColorIndex++;
+        
+        return colorClass;
     }
 
     /**

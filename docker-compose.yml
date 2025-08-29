@@ -10,8 +10,10 @@ services:
       - NODE_ENV=production
       - PORT=3000
     volumes:
-      # 持久化数据库文件
+      # 持久化数据库文件 - 容器内路径: /app/database
       - schedule_data:/app/database
+      # 或者映射到宿主机目录（取消注释下面一行，注释上面一行）
+      # - ./data:/app/database
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
