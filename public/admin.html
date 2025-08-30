@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理员后台 - 课程表管理系统</title>
+    <title>管理员后�?- 课程表管理系�?/title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
     <style>
-        /* 管理员后台专用样式 */
+        /* 管理员后台专用样�?*/
         .admin-container {
             min-height: 100vh;
             background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
@@ -34,7 +34,7 @@
 
         .admin-card {
             background: rgba(255, 255, 255, 0.95);
-            /* backdrop-filter: blur(20px); 暂时禁用以测试 */
+            /* backdrop-filter: blur(20px); 暂时禁用以测�?*/
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 20px;
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
@@ -147,7 +147,7 @@
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             position: relative;
             z-index: 1;
-            pointer-events: none; /* 当隐藏时不拦截鼠标事件 */
+            pointer-events: none; /* 当隐藏时不拦截鼠标事�?*/
         }
         
         .dashboard.active {
@@ -172,7 +172,7 @@
             min-height: 100vh;
         }
 
-        /* 侧边栏样式 */
+        /* 侧边栏样�?*/
         .sidebar {
             width: 280px;
             background: rgba(255, 255, 255, 0.9);
@@ -225,7 +225,7 @@
             margin-top: 4px;
         }
 
-        /* 侧边栏导航 */
+        /* 侧边栏导�?*/
         .sidebar-nav {
             flex: 1;
             padding: 20px 0;
@@ -281,13 +281,13 @@
             text-align: center;
         }
 
-        /* 侧边栏底部 */
+        /* 侧边栏底�?*/
         .sidebar-footer {
             padding: 20px 25px;
             border-top: 2px solid rgba(99, 102, 241, 0.1);
         }
 
-        /* 主内容区域 */
+        /* 主内容区�?*/
         .main-content {
             flex: 1;
             display: flex;
@@ -443,7 +443,7 @@
             box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
         }
 
-        /* 响应式设计 */
+        /* 响应式设�?*/
         @media (max-width: 1024px) {
             .sidebar {
                 width: 240px;
@@ -579,7 +579,7 @@
             border-bottom: none;
         }
 
-        /* 状态标签样式 */
+        /* 状态标签样�?*/
         .status-badge {
             padding: 4px 12px;
             border-radius: 20px;
@@ -945,7 +945,7 @@
                 padding: 12px 15px;
             }
         }
-            /* 修复高度塌陷：确保dashboard和main容器可见并充满视窗 */
+            /* 修复高度塌陷：确保dashboard和main容器可见并充满视�?*/
         #admin-dashboard.dashboard { display: block; }
         .dashboard-layout { min-height: 100vh; }
         .main-content { min-height: calc(100vh - 0px); }
@@ -956,16 +956,16 @@
 </style>
 </head>
 <body>
-    <!-- 管理员登录界面 -->
+    <!-- 管理员登录界�?-->
     <div id="admin-login" class="admin-container">
         <div class="admin-card">
             <div class="admin-logo">🔐</div>
-            <h1 class="admin-title">管理员后台</h1>
+            <h1 class="admin-title">管理员后�?/h1>
             
             <!-- 登录表单 -->
             <form id="login-form" class="login-form">
                 <div class="form-group">
-                    <label for="username">用户名</label>
+                    <label for="username">用户�?/label>
                     <input type="text" id="username" name="username" required>
                 </div>
                 <div class="form-group">
@@ -975,14 +975,13 @@
                 <button type="submit" class="admin-btn">登录</button>
             </form>
 
-            <!-- 初始化设置表单 -->
+            <!-- 初始化设置表�?-->
             <form id="setup-form" class="setup-form">
                 <div class="setup-info">
                     <strong>首次设置</strong><br>
-                    检测到还没有管理员账号，请创建第一个管理员账号。
-                </div>
+                    检测到还没有管理员账号，请创建第一个管理员账号�?                </div>
                 <div class="form-group">
-                    <label for="setup-username">用户名</label>
+                    <label for="setup-username">用户�?/label>
                     <input type="text" id="setup-username" name="username" required>
                 </div>
                 <div class="form-group">
@@ -997,7 +996,7 @@
                     <label for="setup-fullname">姓名（可选）</label>
                     <input type="text" id="setup-fullname" name="fullName">
                 </div>
-                <button type="submit" class="admin-btn">创建管理员账号</button>
+                <button type="submit" class="admin-btn">创建管理员账�?/button>
             </form>
         </div>
     </div>
@@ -1005,14 +1004,14 @@
     <!-- 管理后台界面 -->
     <div id="admin-dashboard" class="dashboard">
         <div class="dashboard-layout">
-            <!-- 侧边栏 -->
+            <!-- 侧边�?-->
             <div class="sidebar">
                 <div class="sidebar-header">
                     <div class="sidebar-logo">
                         <div class="logo-icon">📚</div>
-                        <div class="logo-text">课程表管理</div>
+                        <div class="logo-text">课程表管�?/div>
                     </div>
-                    <div class="sidebar-user">欢迎，<span id="admin-username"></span></div>
+                    <div class="sidebar-user">欢迎�?span id="admin-username"></span></div>
                 </div>
 
                 <nav class="sidebar-nav">
@@ -1021,7 +1020,7 @@
                         系统设置
                     </button>
                     <button class="nav-item" data-tab="teachers">
-                        <span class="nav-item-icon">👨‍🏫</span>
+                        <span class="nav-item-icon">👨‍�?/span>
                         教师管理
                     </button>
                     <button class="nav-item" data-tab="semesters">
@@ -1030,22 +1029,21 @@
                     </button>
                     <button class="nav-item" data-tab="schedules">
                         <span class="nav-item-icon">📋</span>
-                        课程表管理
-                    </button>
+                        课程表管�?                    </button>
                 </nav>
 
                 <div class="sidebar-footer">
-                    <button id="logout-btn" class="btn btn-outline-danger btn-sm" style="width: 100%; margin: 0 0 10px 0;">退出登录</button>
-                    <button id="back-to-main" class="btn btn-outline-primary btn-sm" style="width: 100%; margin: 0;">返回课程表</button>
+                    <button id="logout-btn" class="btn btn-outline-danger btn-sm" style="width: 100%; margin: 0 0 10px 0;">退出登�?/button>
+                    <button id="back-to-main" class="btn btn-outline-primary btn-sm" style="width: 100%; margin: 0;">返回课程�?/button>
                 </div>
             </div>
 
-            <!-- 主内容区域 -->
+            <!-- 主内容区�?-->
             <div class="main-content">
                 <div class="main-header">
                     <h1 class="main-title" id="main-title">系统设置</h1>
                     <div class="main-actions" id="main-actions">
-                        <!-- 动态添加操作按钮 -->
+                        <!-- 动态添加操作按�?-->
                     </div>
                 </div>
 
@@ -1059,7 +1057,7 @@
                         <div class="setting-item">
                             <label for="system-name">系统名称</label>
                             <input type="text" id="system-name" data-key="system_name">
-                            <div class="description">显示在页面标题和头部的系统名称</div>
+                            <div class="description">显示在页面标题和头部的系统名�?/div>
                         </div>
                         <div class="setting-item">
                             <label for="school-name">学校名称</label>
@@ -1071,9 +1069,9 @@
 
                     <!-- 时间设置 -->
                             <div class="content-panel">
-                                <h2 class="panel-title">时间段设置</h2>
+                                <h2 class="panel-title">时间段设�?/h2>
                         <div class="setting-item">
-                            <label for="time-slots">时间段配置</label>
+                            <label for="time-slots">时间段配�?/label>
                             <textarea id="time-slots" rows="10" data-key="time_slots"></textarea>
                             <div class="description">
                                 JSON格式的时间段配置，每行一个时间段<br>
@@ -1087,14 +1085,14 @@
                             <div class="content-panel">
                                 <h2 class="panel-title">安全设置</h2>
                         <div class="setting-item">
-                            <label for="session-timeout">会话超时时间（秒）</label>
+                            <label for="session-timeout">会话超时时间（秒�?/label>
                             <input type="number" id="session-timeout" data-key="session_timeout" min="300" max="86400">
                             <div class="description">管理员登录后的会话有效期</div>
                         </div>
                         <div class="setting-item">
-                            <label for="password-min-length">最小密码长度</label>
+                            <label for="password-min-length">最小密码长�?/label>
                             <input type="number" id="password-min-length" data-key="password_min_length" min="6" max="20">
-                            <div class="description">新建管理员账号时的最小密码长度要求</div>
+                            <div class="description">新建管理员账号时的最小密码长度要�?/div>
                         </div>
                         <button id="save-security" class="save-btn">保存安全设置</button>
                     </div>
@@ -1103,16 +1101,16 @@
                             <div class="content-panel">
                                 <h2 class="panel-title">系统信息</h2>
                         <div class="setting-item">
-                            <label>当前登录管理员</label>
-                            <div id="admin-info">加载中...</div>
+                            <label>当前登录管理�?/label>
+                            <div id="admin-info">加载�?..</div>
                         </div>
                         <div class="setting-item">
-                            <label>最后登录时间</label>
+                            <label>最后登录时�?/label>
                             <div id="last-login">-</div>
                         </div>
                         <div class="setting-item">
-                            <label>系统状态</label>
-                            <div style="color: #28a745;">● 运行正常</div>
+                            <label>系统状�?/label>
+                            <div style="color: #28a745;">�?运行正常</div>
                         </div>
                     </div>
                 </div>
@@ -1141,7 +1139,7 @@
                         <tbody id="teachers-table-body">
                             <tr>
                                 <td colspan="7" style="text-align: center; padding: 40px; color: #666;">
-                                    加载中...
+                                    加载�?..
                                 </td>
                             </tr>
                         </tbody>
@@ -1161,7 +1159,7 @@
                         <thead>
                             <tr>
                                 <th>学期名称</th>
-                                <th>开始日期</th>
+                                <th>开始日�?/th>
                                 <th>结束日期</th>
                                 <th>当前学期</th>
                                 <th>创建时间</th>
@@ -1169,34 +1167,34 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- 动态填充 -->
+                            <!-- 动态填�?-->
                         </tbody>
                     </table>
                         </div>
                     </div>
 
-                    <!-- 课程表管理内容 -->
+                    <!-- 课程表管理内�?-->
                     <div class="content-section" id="schedules-section">
                         <div class="content-panel">
                             <div class="panel-header">
-                                <h2>课程表管理</h2>
+                                <h2>课程表管�?/h2>
                             </div>
                             
                             <div class="table-container">
                                 <table id="schedules-table" class="admin-table">
                                     <thead>
                                         <tr>
-                                            <th>课程表名称</th>
+                                            <th>课程表名�?/th>
                                             <th>教师</th>
                                             <th>学期</th>
-                                            <th>状态</th>
+                                            <th>状�?/th>
                                             <th>归档时间</th>
-                                            <th>归档人</th>
+                                            <th>归档�?/th>
                                             <th>操作</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <!-- 动态填充 -->
+                                        <!-- 动态填�?-->
                                     </tbody>
                                 </table>
                             </div>
@@ -1219,7 +1217,7 @@
                         <input type="text" id="semester-name" name="semesterName" required>
                     </div>
                     <div class="form-group">
-                        <label for="semester-start">开始日期</label>
+                        <label for="semester-start">开始日�?/label>
                         <input type="date" id="semester-start" name="startDate" required>
                     </div>
                     <div class="form-group">
@@ -1244,7 +1242,7 @@
         <div id="schedule-modal" class="modal-overlay" style="display: none;">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3 id="schedule-modal-title">添加课程表</h3>
+                    <h3 id="schedule-modal-title">添加课程�?/h3>
                     <button class="modal-close">&times;</button>
                 </div>
                 <form id="schedule-form">
@@ -1255,7 +1253,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="schedule-name">课程表名称</label>
+                        <label for="schedule-name">课程表名�?/label>
                         <input type="text" id="schedule-name" name="name" required>
                     </div>
                     <div class="form-group">
@@ -1276,7 +1274,7 @@
         <div id="archive-modal" class="modal-overlay" style="display: none;">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>归档课程表</h3>
+                    <h3>归档课程�?/h3>
                     <button class="modal-close">&times;</button>
                 </div>
                 <form id="archive-form">
@@ -1336,7 +1334,7 @@
             </div>
             <div class="modal-body">
                 <div id="teacher-schedules-content">
-                    <p>加载中...</p>
+                    <p>加载�?..</p>
                 </div>
             </div>
             <div class="modal-footer">
@@ -1348,12 +1346,33 @@
     <!-- 通知组件 -->
     <div id="notification-container"></div>
 
+    <script src="js/config.js"></script>
     <script src="js/utils.js"></script>
     <script>
+        // API URL构建函数
+        function buildApiUrl(path) {
+            const baseUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL : '';
+            return baseUrl + path;
+        }
+        
+        // 增强的fetch函数，自动添加credentials
+        async function apiFetch(path, options = {}) {
+            const url = buildApiUrl(path);
+            const config = {
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                ...options
+            };
+            return fetch(url, config);
+        }
+        
         // 管理员系统核心逻辑
         class AdminSystem {
             constructor() {
-                console.log('AdminSystem构造函数调用');
+                console.log('AdminSystem构造函数调�?);
                 this.isLoggedIn = false;
                 this.currentAdmin = null;
                 this.settings = {};
@@ -1364,30 +1383,29 @@
             async init() {
                 await this.checkAdminStatus();
                 this.bindEvents();
-                // bindTabEvents 将在显示后台界面时调用
-                this.bindModalEvents();
+                // bindTabEvents 将在显示后台界面时调�?                this.bindModalEvents();
             }
 
             async checkAdminStatus() {
                 try {
-                    console.log('正在检查管理员状态...');
-                    const response = await fetch('/api/admin/check');
+                    console.log('正在检查管理员状�?..');
+                    const response = await apiFetch('/api/admin/check');
                     const data = await response.json();
-                    console.log('管理员状态:', data);
+                    console.log('管理员状�?', data);
                     
                     if (data.isLoggedIn) {
                         console.log('已登录，加载后台...');
                         await this.loadDashboard();
                     } else if (!data.hasAdmin) {
-                        console.log('无管理员，显示设置表单...');
+                        console.log('无管理员，显示设置表�?..');
                         this.showSetupForm();
                     } else {
-                        console.log('有管理员但未登录，显示登录表单...');
+                        console.log('有管理员但未登录，显示登录表�?..');
                         this.showLoginForm();
                     }
                 } catch (error) {
-                    console.error('检查管理员状态失败:', error);
-                    alert('系统状态检查失败: ' + error.message);
+                    console.error('检查管理员状态失�?', error);
+                    alert('系统状态检查失�? ' + error.message);
                 }
             }
 
@@ -1403,8 +1421,7 @@
                     dashboard.style.display = 'none';
                     dashboard.style.pointerEvents = 'none';
                     dashboard.style.zIndex = '-1';
-                    dashboard.classList.remove('active'); // 移除active类禁用点击事件
-                    console.log('后台界面已隐藏');
+                    dashboard.classList.remove('active'); // 移除active类禁用点击事�?                    console.log('后台界面已隐�?);
                 }
                 
                 // 确保登录容器显示并可交互
@@ -1412,16 +1429,16 @@
                     adminLogin.style.display = 'flex';
                     adminLogin.style.pointerEvents = 'auto';
                     adminLogin.style.zIndex = '100';
-                    console.log('登录容器已显示');
+                    console.log('登录容器已显�?);
                 }
                 
                 if (loginForm) {
                     loginForm.style.display = 'block';
-                    console.log('登录表单已显示');
+                    console.log('登录表单已显�?);
                 }
                 if (setupForm) {
                     setupForm.style.display = 'none';
-                    console.log('设置表单已隐藏');
+                    console.log('设置表单已隐�?);
                 }
             }
 
@@ -1432,26 +1449,24 @@
                 
                 if (loginForm) {
                     loginForm.style.display = 'none';
-                    console.log('登录表单已隐藏');
+                    console.log('登录表单已隐�?);
                 }
                 if (setupForm) {
                     setupForm.style.display = 'block';
-                    console.log('设置表单已显示');
+                    console.log('设置表单已显�?);
                 }
             }
 
             async loadDashboard() {
                 try {
-                    // 获取管理员信息
-                    const profileResponse = await fetch('/api/admin/profile');
+                    // 获取管理员信�?                    const profileResponse = await apiFetch('/api/admin/profile');
                     this.currentAdmin = await profileResponse.json();
                     
                     // 获取系统设置
-                    const settingsResponse = await fetch('/api/admin/settings');
+                    const settingsResponse = await apiFetch('/api/admin/settings');
                     const settingsArray = await settingsResponse.json();
                     
-                    // 转换设置数组为对象
-                    this.settings = {};
+                    // 转换设置数组为对�?                    this.settings = {};
                     settingsArray.forEach(setting => {
                         this.settings[setting.setting_key] = setting.setting_value;
                     });
@@ -1471,14 +1486,12 @@
                 
                 if (loginContainer) {
                     loginContainer.style.display = 'none';
-                    console.log('登录容器已隐藏');
+                    console.log('登录容器已隐�?);
                 }
                 if (dashboardContainer) {
                     dashboardContainer.style.display = 'block';
-                    dashboardContainer.classList.add('active'); // 添加active类启用点击事件
-                    
-                    // 强制设置pointer-events以确保可以交互（使用!important级别的优先级）
-                    dashboardContainer.style.pointerEvents = 'auto';
+                    dashboardContainer.classList.add('active'); // 添加active类启用点击事�?                    
+                    // 强制设置pointer-events以确保可以交互（使用!important级别的优先级�?                    dashboardContainer.style.pointerEvents = 'auto';
                     dashboardContainer.style.setProperty('pointer-events', 'auto', 'important');
                     dashboardContainer.style.zIndex = '100'; // 确保在最上层
                     dashboardContainer.classList.remove('hidden'); // 移除可能的隐藏类
@@ -1487,8 +1500,7 @@
                     console.log('pointer-events样式:', getComputedStyle(dashboardContainer).pointerEvents);
                     console.log('z-index样式:', getComputedStyle(dashboardContainer).zIndex);
                     
-                    // 确保DOM完全渲染后再初始化导航（多次尝试确保绑定成功）
-                    this.ensureNavigationBinding();
+                    // 确保DOM完全渲染后再初始化导航（多次尝试确保绑定成功�?                    this.ensureNavigationBinding();
                 }
             }
             
@@ -1518,21 +1530,19 @@
                         if (attempts < maxAttempts) {
                             setTimeout(tryBinding, 200);
                         } else {
-                            console.error('导航事件绑定失败：超过最大尝试次数');
+                            console.error('导航事件绑定失败：超过最大尝试次�?);
                         }
                         return false;
                     }
                 };
                 
-                // 立即尝试一次
-                setTimeout(tryBinding, 50);
+                // 立即尝试一�?                setTimeout(tryBinding, 50);
             }
 
             populateSettings() {
-                console.log('填充设置值...', this.settings);
+                console.log('填充设置�?..', this.settings);
                 
-                // 显示管理员信息
-                const usernameEl = document.getElementById('admin-username');
+                // 显示管理员信�?                const usernameEl = document.getElementById('admin-username');
                 const infoEl = document.getElementById('admin-info');
                 const lastLoginEl = document.getElementById('last-login');
                 
@@ -1540,15 +1550,14 @@
                     usernameEl.textContent = this.currentAdmin.username;
                 }
                 if (infoEl && this.currentAdmin) {
-                    infoEl.textContent = `${this.currentAdmin.username} (${this.currentAdmin.email || '未设置邮箱'})`;
+                    infoEl.textContent = `${this.currentAdmin.username} (${this.currentAdmin.email || '未设置邮�?})`;
                 }
                 if (lastLoginEl && this.currentAdmin && this.currentAdmin.last_login) {
                     const lastLogin = new Date(this.currentAdmin.last_login).toLocaleString('zh-CN');
                     lastLoginEl.textContent = lastLogin;
                 }
                 
-                // 填充设置值
-                Object.keys(this.settings).forEach(key => {
+                // 填充设置�?                Object.keys(this.settings).forEach(key => {
                     const input = document.querySelector(`[data-key="${key}"]`);
                     if (input) {
                         let value = this.settings[key];
@@ -1559,8 +1568,7 @@
                                 const parsed = JSON.parse(value);
                                 value = JSON.stringify(parsed, null, 2);
                             } catch (e) {
-                                // 保持原值
-                                console.log('JSON解析失败，保持原值:', value);
+                                // 保持原�?                                console.log('JSON解析失败，保持原�?', value);
                             }
                         }
                         
@@ -1577,8 +1585,7 @@
                 
                 // 定义简化的事件处理函数
                 const forceInputFocus = (input, name) => {
-                    // 只处理点击事件，避免focus事件的无限循环
-                    ['click', 'mousedown'].forEach(eventType => {
+                    // 只处理点击事件，避免focus事件的无限循�?                    ['click', 'mousedown'].forEach(eventType => {
                         input.addEventListener(eventType, (e) => {
                             e.stopPropagation();
                             if (eventType === 'click') {
@@ -1598,17 +1605,15 @@
                         this.handleLogin();
                     });
                     
-                    // 表单点击处理（确保输入框可以获得焦点）
-                    loginForm.addEventListener('click', (e) => {
+                    // 表单点击处理（确保输入框可以获得焦点�?                    loginForm.addEventListener('click', (e) => {
                         if (e.target.tagName === 'INPUT') {
                             e.target.focus();
                         }
                     });
                     
-                    console.log('登录表单事件已绑定');
+                    console.log('登录表单事件已绑�?);
                     
-                    // 调试输入框状态
-                    const usernameInput = document.getElementById('username');
+                    // 调试输入框状�?                    const usernameInput = document.getElementById('username');
                     const passwordInput = document.getElementById('password');
                     
                     if (usernameInput) {
@@ -1623,7 +1628,7 @@
                     
                     if (passwordInput) {
                         // 应用事件处理
-                        forceInputFocus(passwordInput, '密码输入框');
+                        forceInputFocus(passwordInput, '密码输入�?);
                     }
                 }
 
@@ -1634,11 +1639,10 @@
                         e.preventDefault();
                         this.handleSetup();
                     });
-                    console.log('设置表单事件已绑定');
+                    console.log('设置表单事件已绑�?);
                 }
 
-                // 退出登录
-                const logoutBtn = document.getElementById('logout-btn');
+                // 退出登�?                const logoutBtn = document.getElementById('logout-btn');
                 if (logoutBtn) {
                     logoutBtn.addEventListener('click', () => {
                         this.handleLogout();
@@ -1646,13 +1650,12 @@
                     console.log('退出按钮事件已绑定');
                 }
 
-                // 返回课程表
-                const backBtn = document.getElementById('back-to-main');
+                // 返回课程�?                const backBtn = document.getElementById('back-to-main');
                 if (backBtn) {
                     backBtn.addEventListener('click', () => {
                         window.location.href = '/';
                     });
-                    console.log('返回按钮事件已绑定');
+                    console.log('返回按钮事件已绑�?);
                 }
 
                 // 保存设置按钮
@@ -1661,7 +1664,7 @@
                     saveBasicBtn.addEventListener('click', () => {
                         this.saveSettings(['system_name', 'school_name']);
                     });
-                    console.log('基本设置保存按钮事件已绑定');
+                    console.log('基本设置保存按钮事件已绑�?);
                 }
 
                 const saveTimeBtn = document.getElementById('save-time');
@@ -1669,7 +1672,7 @@
                     saveTimeBtn.addEventListener('click', () => {
                         this.saveSettings(['time_slots']);
                     });
-                    console.log('时间设置保存按钮事件已绑定');
+                    console.log('时间设置保存按钮事件已绑�?);
                 }
 
                 const saveSecurityBtn = document.getElementById('save-security');
@@ -1677,7 +1680,7 @@
                     saveSecurityBtn.addEventListener('click', () => {
                         this.saveSettings(['session_timeout', 'password_min_length']);
                     });
-                    console.log('安全设置保存按钮事件已绑定');
+                    console.log('安全设置保存按钮事件已绑�?);
                 }
 
                 // 添加教师按钮
@@ -1686,7 +1689,7 @@
                     addTeacherBtn.addEventListener('click', () => {
                         this.showTeacherModal();
                     });
-                    console.log('添加教师按钮事件已绑定');
+                    console.log('添加教师按钮事件已绑�?);
                 }
 
                 // 教师表单提交
@@ -1696,10 +1699,10 @@
                         e.preventDefault();
                         this.handleTeacherSubmit();
                     });
-                    console.log('教师表单事件已绑定');
+                    console.log('教师表单事件已绑�?);
                 }
                 
-                console.log('所有事件绑定完成');
+                console.log('所有事件绑定完�?);
             }
 
             async handleLogin() {
@@ -1711,7 +1714,7 @@
                 };
 
                 try {
-                    const response = await fetch('/api/admin/login', {
+                    const response = await apiFetch('/api/admin/login', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -1744,7 +1747,7 @@
                 };
 
                 try {
-                    const response = await fetch('/api/admin/setup', {
+                    const response = await apiFetch('/api/admin/setup', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -1755,27 +1758,27 @@
                     const result = await response.json();
 
                     if (response.ok) {
-                        alert('管理员账号创建成功，请登录');
+                        alert('管理员账号创建成功，请登�?);
                         this.showLoginForm();
                         const usernameInput = document.getElementById('username');
                         if (usernameInput) {
                             usernameInput.value = data.username;
                         }
                     } else {
-                        alert(result.error || '创建管理员失败');
+                        alert(result.error || '创建管理员失�?);
                     }
                 } catch (error) {
-                    console.error('创建管理员失败:', error);
-                    alert('创建管理员请求失败');
+                    console.error('创建管理员失�?', error);
+                    alert('创建管理员请求失�?);
                 }
             }
 
             async handleLogout() {
                 try {
-                    await fetch('/api/admin/logout', { method: 'POST' });
+                    await apiFetch('/api/admin/logout', { method: 'POST' });
                     window.location.reload();
                 } catch (error) {
-                    console.error('退出登录失败:', error);
+                    console.error('退出登录失�?', error);
                     window.location.reload();
                 }
             }
@@ -1788,8 +1791,7 @@
                     if (input) {
                         let value = input.value.trim();
                         
-                        // 验证JSON格式的设置
-                        if (key === 'time_slots') {
+                        // 验证JSON格式的设�?                        if (key === 'time_slots') {
                             try {
                                 JSON.parse(value);
                             } catch (e) {
@@ -1831,39 +1833,35 @@
                 }
             }
 
-            // 绑定标签页事件
-            bindTabEvents() {
+            // 绑定标签页事�?            bindTabEvents() {
                 console.log('开始绑定标签页事件...');
                 const navItems = document.querySelectorAll('.nav-item');
-                console.log('找到导航项数量:', navItems.length);
+                console.log('找到导航项数�?', navItems.length);
                 
                 navItems.forEach((item, index) => {
-                    console.log(`绑定导航项 ${index}:`, item.dataset.tab);
+                    console.log(`绑定导航�?${index}:`, item.dataset.tab);
                     
-                    // 移除可能存在的旧事件监听器
-                    const newItem = item.cloneNode(true);
+                    // 移除可能存在的旧事件监听�?                    const newItem = item.cloneNode(true);
                     item.parentNode.replaceChild(newItem, item);
                     
-                    // 添加新的事件监听器
-                    newItem.addEventListener('click', (e) => {
+                    // 添加新的事件监听�?                    newItem.addEventListener('click', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         
                         const tabName = newItem.dataset.tab;
-                        console.log('点击导航项:', tabName);
+                        console.log('点击导航�?', tabName);
                         this.switchTab(tabName);
                     });
                 });
                 
-                console.log('标签页事件绑定完成');
+                console.log('标签页事件绑定完�?);
                 
                 // 确保所有内容区域都存在并初始化显示
                 this.initializeContentSections();
             }
 
-            // 初始化内容区域
-            initializeContentSections() {
-                console.log('初始化内容区域...');
+            // 初始化内容区�?            initializeContentSections() {
+                console.log('初始化内容区�?..');
                 
                 const sections = ['settings', 'teachers', 'semesters', 'schedules'];
                 sections.forEach(sectionName => {
@@ -1872,34 +1870,30 @@
                     
                     if (section) {
                         console.log(`找到内容区域: ${sectionId}`);
-                        // 确保section在.main-body中
-                        const mainBody = document.querySelector('.main-body');
+                        // 确保section�?main-body�?                        const mainBody = document.querySelector('.main-body');
                         if (mainBody && section.parentElement !== mainBody) {
                             mainBody.appendChild(section);
                             console.log(`已将 ${sectionId} 移入 .main-body`);
                         }
                     } else {
-                        console.error(`未找到内容区域: ${sectionId}`);
+                        console.error(`未找到内容区�? ${sectionId}`);
                     }
                 });
                 
-                // 初始显示第一个tab（settings）
-                this.switchTab('settings');
+                // 初始显示第一个tab（settings�?                this.switchTab('settings');
             }
 
-            // 切换标签页
-            switchTab(tabName) {
-                console.log('切换标签页:', tabName);
+            // 切换标签�?            switchTab(tabName) {
+                console.log('切换标签�?', tabName);
                 
-                // 更新导航项状态
-                document.querySelectorAll('.nav-item').forEach(item => {
+                // 更新导航项状�?                document.querySelectorAll('.nav-item').forEach(item => {
                     item.classList.remove('active');
                 });
                 
                 const targetNavItem = document.querySelector(`[data-tab="${tabName}"]`);
                 if (targetNavItem) {
                     targetNavItem.classList.add('active');
-                    console.log(`导航项 ${tabName} 已设置为 active`);
+                    console.log(`导航�?${tabName} 已设置为 active`);
                 } else {
                     console.error(`未找到导航项: [data-tab="${tabName}"]`);
                 }
@@ -1911,11 +1905,10 @@
                 });
                 
                 const targetSection = document.getElementById(`${tabName}-section`);
-                console.log(`切换到标签: ${tabName}, 目标元素:`, targetSection);
+                console.log(`切换到标�? ${tabName}, 目标元素:`, targetSection);
                 
                 if (targetSection) {
-                    // 确保目标面板在 .main-body 内
-                    const mainBodyEl = document.querySelector('.main-body');
+                    // 确保目标面板�?.main-body �?                    const mainBodyEl = document.querySelector('.main-body');
                     if (mainBodyEl && targetSection.parentElement !== mainBodyEl) {
                         mainBodyEl.appendChild(targetSection);
                         console.log(`已将 ${tabName}-section 移入 .main-body`);
@@ -1923,13 +1916,13 @@
                     
                     targetSection.classList.add('active');
                     targetSection.style.display = 'block';
-                    console.log(`${tabName}-section 已设置为 active，当前类名:`, targetSection.className);
+                    console.log(`${tabName}-section 已设置为 active，当前类�?`, targetSection.className);
                     
                     // 强制重新布局
                     targetSection.offsetHeight; // 触发重排
                     
                 } else {
-                    console.error(`未找到元素: ${tabName}-section`);
+                    console.error(`未找到元�? ${tabName}-section`);
                 }
 
                 // 更新页面标题
@@ -1937,7 +1930,7 @@
                     'settings': '系统设置',
                     'teachers': '教师管理',
                     'semesters': '学期管理',
-                    'schedules': '课程表管理'
+                    'schedules': '课程表管�?
                 };
                 const titleElement = document.getElementById('main-title');
                 if (titleElement) {
@@ -1970,9 +1963,8 @@
                     } else if (tabName === 'schedules') {
                         actionsContainer.innerHTML = `
                             <label style="margin-right: 15px; display: flex; align-items: center; gap: 8px; font-size: 14px;">
-                                <input type="checkbox" id="include-archived-header"> 显示已归档
-                            </label>
-                            <button id="add-schedule-btn-header" class="btn btn-primary btn-sm">添加课程表</button>
+                                <input type="checkbox" id="include-archived-header"> 显示已归�?                            </label>
+                            <button id="add-schedule-btn-header" class="btn btn-primary btn-sm">添加课程�?/button>
                         `;
                         // 重新绑定相关事件
                         setTimeout(() => {
@@ -1989,8 +1981,7 @@
                     }
                 }
                 
-                // 根据不同标签页加载相应数据
-                this.loadTabData(tabName);
+                // 根据不同标签页加载相应数�?                this.loadTabData(tabName);
             }
             
             // 加载设置数据
@@ -1998,14 +1989,13 @@
                 console.log('加载设置数据...');
                 try {
                     // 获取系统设置
-                    const response = await fetch('/api/admin/settings');
+                    const response = await apiFetch('/api/admin/settings');
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     const settingsArray = await response.json();
                     
-                    // 转换设置数组为对象
-                    this.settings = {};
+                    // 转换设置数组为对�?                    this.settings = {};
                     settingsArray.forEach(setting => {
                         this.settings[setting.setting_key] = setting.setting_value;
                     });
@@ -2014,13 +2004,11 @@
                     this.populateSettings();
                 } catch (error) {
                     console.error('加载设置失败:', error);
-                    // 不显示alert，避免打断用户操作
-                }
+                    // 不显示alert，避免打断用户操�?                }
             }
             
-            // 加载标签页数据
-            loadTabData(tabName) {
-                console.log('加载标签页数据:', tabName);
+            // 加载标签页数�?            loadTabData(tabName) {
+                console.log('加载标签页数�?', tabName);
                 
                 switch (tabName) {
                     case 'settings':
@@ -2062,16 +2050,14 @@
                     
                     if (checkbox) {
                         checkbox.addEventListener('change', () => {
-                            // 同步原有复选框状态
-                            const originalCheckbox = document.getElementById('include-archived');
+                            // 同步原有复选框状�?                            const originalCheckbox = document.getElementById('include-archived');
                             if (originalCheckbox) {
                                 originalCheckbox.checked = checkbox.checked;
                             }
                             this.loadSchedules();
                         });
                         
-                        // 同步原有复选框状态
-                        const originalCheckbox = document.getElementById('include-archived');
+                        // 同步原有复选框状�?                        const originalCheckbox = document.getElementById('include-archived');
                         if (originalCheckbox) {
                             checkbox.checked = originalCheckbox.checked;
                             originalCheckbox.addEventListener('change', () => {
@@ -2109,8 +2095,7 @@
                     });
                 }
 
-                // 课程表管理事件
-                const addScheduleBtn = document.getElementById('add-schedule-btn');
+                // 课程表管理事�?                const addScheduleBtn = document.getElementById('add-schedule-btn');
                 if (addScheduleBtn) {
                     addScheduleBtn.addEventListener('click', () => {
                         this.showScheduleModal();
@@ -2159,7 +2144,7 @@
             // 学期管理相关方法
             async loadSemesters() {
                 try {
-                    const response = await fetch('/api/admin/semesters');
+                    const response = await apiFetch('/api/admin/semesters');
                     if (response.ok) {
                         const semesters = await response.json();
                         this.renderSemesters(Array.isArray(semesters) ? semesters : []);
@@ -2224,7 +2209,7 @@
 
             async editSemester(id) {
                 try {
-                    const response = await fetch('/api/admin/semesters');
+                    const response = await apiFetch('/api/admin/semesters');
                     const semesters = await response.json();
                     const semester = semesters.find(s => s.id === id);
                     if (semester) {
@@ -2237,7 +2222,7 @@
             }
 
             async deleteSemester(id) {
-                if (!confirm('确定要删除这个学期吗？删除后无法恢复。')) {
+                if (!confirm('确定要删除这个学期吗？删除后无法恢复�?)) {
                     return;
                 }
 
@@ -2296,11 +2281,9 @@
                 }
             }
 
-            // 课程表管理相关方法
-            async loadSchedules() {
+            // 课程表管理相关方�?            async loadSchedules() {
                 try {
-                    // 尝试从头部或原位置获取复选框状态
-                    let includeArchived = false;
+                    // 尝试从头部或原位置获取复选框状�?                    let includeArchived = false;
                     const headerCheckbox = document.getElementById('include-archived-header');
                     const originalCheckbox = document.getElementById('include-archived');
                     
@@ -2311,22 +2294,22 @@
                     }
                     
                     const url = `/api/admin/schedules?includeArchived=${includeArchived}`;
-                    console.log('加载课程表列表:', url);
+                    console.log('加载课程表列�?', url);
                     
                     const response = await fetch(url);
                     if (response.ok) {
                         const schedules = await response.json();
-                        console.log('课程表列表加载成功:', schedules);
+                        console.log('课程表列表加载成�?', schedules);
                         this.renderSchedules(Array.isArray(schedules) ? schedules : []);
                     } else {
-                        console.error('获取课程表列表失败:', response.status);
+                        console.error('获取课程表列表失�?', response.status);
                         this.renderSchedules([]);
-                        alert('获取课程表列表失败');
+                        alert('获取课程表列表失�?);
                     }
                 } catch (error) {
-                    console.error('加载课程表列表失败:', error);
+                    console.error('加载课程表列表失�?', error);
                     this.renderSchedules([]);
-                    alert('加载课程表列表失败: ' + error.message);
+                    alert('加载课程表列表失�? ' + error.message);
                 }
             }
 
@@ -2334,7 +2317,7 @@
                 console.log('开始渲染课程表列表:', schedules);
                 const tbody = document.querySelector('#schedules-table tbody');
                 if (!tbody) {
-                    console.error('未找到 #schedules-table tbody 元素');
+                    console.error('未找�?#schedules-table tbody 元素');
                     return;
                 }
 
@@ -2344,17 +2327,16 @@
                     tbody.innerHTML = `
                         <tr>
                             <td colspan="7" style="text-align: center; padding: 40px; color: #666;">
-                                暂无课程表数据
-                            </td>
+                                暂无课程表数�?                            </td>
                         </tr>
                     `;
-                    console.log('课程表列表为空，显示空状态');
+                    console.log('课程表列表为空，显示空状�?);
                     return;
                 }
                 
-                console.log(`开始渲染 ${schedules.length} 个课程表`);
+                console.log(`开始渲�?${schedules.length} 个课程表`);
                 schedules.forEach((schedule, index) => {
-                    console.log(`渲染第 ${index + 1} 个课程表:`, schedule);
+                    console.log(`渲染�?${index + 1} 个课程表:`, schedule);
                     
                     const row = document.createElement('tr');
                     const isArchived = schedule.is_archived;
@@ -2366,7 +2348,7 @@
                             <td>${schedule.semester_name || '-'}</td>
                             <td>
                                 <span class="status-badge ${isArchived ? 'status-archived' : 'status-active'}">
-                                    ${isArchived ? '已归档' : '正常'}
+                                    ${isArchived ? '已归�? : '正常'}
                                 </span>
                             </td>
                             <td>${schedule.archived_at ? new Date(schedule.archived_at).toLocaleDateString('zh-CN') : '-'}</td>
@@ -2380,19 +2362,18 @@
                             </td>
                         `;
                         
-                        console.log(`第 ${index + 1} 个课程表行HTML:`, row.innerHTML);
+                        console.log(`�?${index + 1} 个课程表行HTML:`, row.innerHTML);
                         tbody.appendChild(row);
-                        console.log(`第 ${index + 1} 个课程表行已添加到表格`);
+                        console.log(`�?${index + 1} 个课程表行已添加到表格`);
                         
                     } catch (error) {
-                        console.error(`渲染第 ${index + 1} 个课程表时出错:`, error);
+                        console.error(`渲染�?${index + 1} 个课程表时出�?`, error);
                     }
                 });
                 
                 console.log('课程表渲染完成，当前表格内容:', tbody.innerHTML);
                 
-                // 检查DOM元素可见性
-                const schedulesSection = document.getElementById('schedules-section');
+                // 检查DOM元素可见�?                const schedulesSection = document.getElementById('schedules-section');
                 const table = document.getElementById('schedules-table');
                 console.log('schedules-section 元素:', schedulesSection);
                 console.log('schedules-section 类名:', schedulesSection?.className);
@@ -2428,10 +2409,9 @@
                 console.log('rect - container:', containerRect);
                 console.log('rect - table:', tableRect);
                 console.log('rect - tbody:', tbodyRect);
-                console.log('tbody 子元素数量:', tbodyEl?.children?.length);
+                console.log('tbody 子元素数�?', tbodyEl?.children?.length);
                 
-                // 强制可见与尺寸，避免祖先高度塌陷导致不可见
-                try {
+                // 强制可见与尺寸，避免祖先高度塌陷导致不可�?                try {
                     if (dashboard) {
                         dashboard.style.display = 'block';
                         dashboard.style.minHeight = '100vh';
@@ -2476,18 +2456,16 @@
             }
 
             async showScheduleModal() {
-                // 加载教师和学期数据
-                try {
+                // 加载教师和学期数�?                try {
                     const [teachersResponse, semestersResponse] = await Promise.all([
-                        fetch('/api/admin/teachers'),
-                        fetch('/api/admin/semesters')
+                        apiFetch('/api/admin/teachers'),
+                        apiFetch('/api/admin/semesters')
                     ]);
 
                     const teachers = await teachersResponse.json();
                     const semesters = await semestersResponse.json();
 
-                    // 填充下拉框
-                    const teacherSelect = document.getElementById('schedule-teacher');
+                    // 填充下拉�?                    const teacherSelect = document.getElementById('schedule-teacher');
                     const semesterSelect = document.getElementById('schedule-semester');
 
                     teacherSelect.innerHTML = '<option value="">请选择教师</option>';
@@ -2516,7 +2494,7 @@
                 };
 
                 try {
-                    const response = await fetch('/api/admin/schedules', {
+                    const response = await apiFetch('/api/admin/schedules', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -2526,15 +2504,15 @@
 
                     const result = await response.json();
                     if (response.ok) {
-                        alert('课程表创建成功');
+                        alert('课程表创建成�?);
                         this.hideModal(document.getElementById('schedule-modal'));
                         this.loadSchedules();
                     } else {
                         alert(result.error || '创建失败');
                     }
                 } catch (error) {
-                    console.error('创建课程表失败:', error);
-                    alert('创建课程表失败');
+                    console.error('创建课程表失�?', error);
+                    alert('创建课程表失�?);
                 }
             }
 
@@ -2567,8 +2545,8 @@
                         alert(result.error || '归档失败');
                     }
                 } catch (error) {
-                    console.error('归档课程表失败:', error);
-                    alert('归档课程表失败');
+                    console.error('归档课程表失�?', error);
+                    alert('归档课程表失�?);
                 }
             }
 
@@ -2590,8 +2568,8 @@
                         alert(result.error || '恢复失败');
                     }
                 } catch (error) {
-                    console.error('恢复课程表失败:', error);
-                    alert('恢复课程表失败');
+                    console.error('恢复课程表失�?', error);
+                    alert('恢复课程表失�?);
                 }
             }
 
@@ -2613,8 +2591,8 @@
                         alert(result.error || '删除失败');
                     }
                 } catch (error) {
-                    console.error('删除课程表失败:', error);
-                    alert('删除课程表失败');
+                    console.error('删除课程表失�?', error);
+                    alert('删除课程表失�?);
                 }
             }
 
@@ -2623,8 +2601,8 @@
             // 加载教师列表
             async loadTeachers() {
                 try {
-                    console.log('开始加载教师列表...');
-                    const response = await fetch('/api/admin/teachers');
+                    console.log('开始加载教师列�?..');
+                    const response = await apiFetch('/api/admin/teachers');
                     const teachers = await response.json();
                     
                     if (!response.ok) {
@@ -2658,8 +2636,7 @@
                     return;
                 }
 
-                // 获取每个教师的课表数量
-                const teachersWithSchedules = await Promise.all(
+                // 获取每个教师的课表数�?                const teachersWithSchedules = await Promise.all(
                     teachers.map(async (teacher) => {
                         try {
                             const response = await fetch(`/api/admin/teachers/${teacher.id}/schedules`);
@@ -2685,8 +2662,7 @@
                             <span class="badge ${teacher.scheduleCount > 0 ? 'badge-info' : 'badge-secondary'}" 
                                   style="cursor: pointer;" 
                                   onclick="window.adminSystem.showTeacherSchedules(${teacher.id}, '${teacher.name}')">
-                                ${teacher.scheduleCount} 个
-                            </span>
+                                ${teacher.scheduleCount} �?                            </span>
                         </td>
                         <td>${new Date(teacher.created_at).toLocaleDateString()}</td>
                         <td>
@@ -2783,7 +2759,7 @@
                     return;
                 }
 
-                if (!confirm(`确定要删除教师"${teacherName}"吗？此操作不可撤销。`)) {
+                if (!confirm(`确定要删除教�?${teacherName}"吗？此操作不可撤销。`)) {
                     return;
                 }
 
@@ -2826,7 +2802,7 @@
                     title.textContent = `${teacherName} 的课表`;
 
                     if (!Array.isArray(schedules) || schedules.length === 0) {
-                        content.innerHTML = '<p style="text-align: center; color: #666;">该教师暂无课表</p>';
+                        content.innerHTML = '<p style="text-align: center; color: #666;">该教师暂无课�?/p>';
                     } else {
                         content.innerHTML = `
                             <table class="data-table">
@@ -2835,7 +2811,7 @@
                                         <th>课表名称</th>
                                         <th>学期</th>
                                         <th>课程数量</th>
-                                        <th>状态</th>
+                                        <th>状�?/th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -2843,10 +2819,10 @@
                                         <tr>
                                             <td>${schedule.name}</td>
                                             <td>${schedule.semester_name || '-'}</td>
-                                            <td>${schedule.course_count} 门</td>
+                                            <td>${schedule.course_count} �?/td>
                                             <td>
                                                 <span class="badge ${schedule.is_archived ? 'badge-secondary' : 'badge-success'}">
-                                                    ${schedule.is_archived ? '已归档' : '活跃'}
+                                                    ${schedule.is_archived ? '已归�? : '活跃'}
                                                 </span>
                                             </td>
                                         </tr>
@@ -2864,36 +2840,32 @@
             }
         }
 
-        // 启动管理员系统
-        document.addEventListener('DOMContentLoaded', () => {
+        // 启动管理员系�?        document.addEventListener('DOMContentLoaded', () => {
             console.log('DOM加载完成，启动管理员系统...');
             try {
                 window.adminSystem = new AdminSystem();
-                console.log('管理员系统创建成功');
+                console.log('管理员系统创建成�?);
                 
-                // 调试功能：强制显示登录表单
-                window.forceShowLogin = () => {
+                // 调试功能：强制显示登录表�?                window.forceShowLogin = () => {
                     console.log('强制显示登录表单...');
                     document.getElementById('admin-login').style.display = 'flex';
                     document.getElementById('dashboard').style.display = 'none';
                     window.adminSystem.showLoginForm();
                 };
                 
-                // 调试功能：退出登录
-                window.forceLogout = async () => {
+                // 调试功能：退出登�?                window.forceLogout = async () => {
                     try {
-                        await fetch('/api/admin/logout', { method: 'POST' });
-                        console.log('退出登录成功');
+                        await apiFetch('/api/admin/logout', { method: 'POST' });
+                        console.log('退出登录成�?);
                         location.reload();
                     } catch (error) {
-                        console.error('退出登录失败:', error);
+                        console.error('退出登录失�?', error);
                     }
                 };
                 
-                console.log('调试功能已添加: window.forceShowLogin() 和 window.forceLogout()');
+                console.log('调试功能已添�? window.forceShowLogin() �?window.forceLogout()');
                 
-                // 添加输入框修复功能
-                window.fixInputs = () => {
+                // 添加输入框修复功�?                window.fixInputs = () => {
                     const usernameInput = document.getElementById('username');
                     const passwordInput = document.getElementById('password');
                     
@@ -2909,7 +2881,7 @@
                             
                             newInput.addEventListener('click', () => {
                                 newInput.focus();
-                                console.log('输入框获得焦点:', newInput.id);
+                                console.log('输入框获得焦�?', newInput.id);
                             });
                         }
                     });

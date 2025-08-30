@@ -8,7 +8,7 @@ const session = require('express-session');
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 301;
 
 // 数据库连接
 const dbPath = path.join(__dirname, 'database/schedule.db');
@@ -43,19 +43,32 @@ function initWeeklyNotesTable() {
     });
 }
 
-// 中间件配置
-app.use(cors());
+// 中间件配置 - 增强CORS支持
+app.use(cors({
+    origin: [
+        'http://172.16.201.191',
+        'http://172.16.201.191:80',
+        'http://localhost:8080',
+        'http://localhost:3000'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// 会话配置
+// 会话配置 - 支持跨域
 app.use(session({
     secret: 'schedule-system-secret-key-2024',
     resave: false,
     saveUninitialized: false,
     cookie: {
         secure: false, // 在HTTPS中设为true
-        maxAge: 3600000 // 1小时
+        maxAge: 3600000, // 1小时
+        sameSite: 'lax', // 支持跨域
+        httpOnly: true
     }
 }));
 
@@ -72,8 +85,8 @@ app.use((req, res, next) => {
     next();
 });
 
-// 静态文件服务
-app.use(express.static(path.join(__dirname, 'public')));
+// 静态文件服务 - 前后端分离模式下注释掉
+// app.use(express.static(path.join(__dirname, 'public')));
 
 // 管理员认证中间件
 function requireAuth(req, res, next) {

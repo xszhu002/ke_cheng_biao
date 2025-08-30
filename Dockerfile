@@ -1,5 +1,5 @@
-# 使用官方Node.js运行时作为基础镜像
-FROM node:18-alpine AS base
+# 使用官方Node.js 18运行时作为基础镜像
+FROM node:18-alpine
 
 # 设置工作目录
 WORKDIR /app
@@ -8,57 +8,26 @@ WORKDIR /app
 COPY package*.json ./
 
 # 安装依赖
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --only=production
 
-# 创建生产镜像
-FROM node:18-alpine AS production
+# 复制应用代码（只复制后端需要的文件）
+COPY server.js ./
+COPY database/ ./database/
+COPY scripts/ ./scripts/
 
-# 安装必要的系统依赖
-RUN apk add --no-cache \
-    sqlite \
-    python3 \
-    make \
-    g++
+# 创建数据库目录并设置权限
+RUN mkdir -p /app/database && chmod 755 /app/database
 
-# 创建非root用户
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001
-
-# 设置工作目录
-WORKDIR /app
-
-# 从base阶段复制node_modules
-COPY --from=base --chown=nextjs:nodejs /app/node_modules ./node_modules
-
-# 复制应用代码
-COPY --chown=nextjs:nodejs . .
-
-# 创建数据库目录
-RUN mkdir -p database && chown -R nextjs:nodejs database
-
-# 切换到非root用户
-USER nextjs
-
-# 初始化数据库
-RUN npm run init-db
-
-# 暴露端口
-EXPOSE 3000
+# 暴露后端API端口（301）
+EXPOSE 301
 
 # 设置环境变量
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=301
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD node -e "const http = require('http'); \
-    const options = { host: 'localhost', port: 3000, path: '/', timeout: 2000 }; \
-    const request = http.request(options, (res) => { \
-        if (res.statusCode === 200) process.exit(0); \
-        else process.exit(1); \
-    }); \
-    request.on('error', () => process.exit(1)); \
-    request.end();"
+    CMD node -e "require('http').get('http://localhost:301/api/admin/check', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"
 
 # 启动应用
-CMD ["npm", "start"] 
+CMD ["node", "server.js"] 

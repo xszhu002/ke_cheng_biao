@@ -5,7 +5,7 @@
  */
 class ApiClient {
     constructor(baseUrl = '') {
-        this.baseUrl = baseUrl;
+        this.baseUrl = baseUrl || (window.API_CONFIG ? window.API_CONFIG.BASE_URL : '');
         this.defaultHeaders = {
             'Content-Type': 'application/json',
         };
@@ -19,6 +19,7 @@ class ApiClient {
     async request(url, options = {}) {
         const config = {
             headers: { ...this.defaultHeaders, ...options.headers },
+            credentials: 'include', // 包含cookies用于session
             ...options
         };
 
@@ -104,7 +105,28 @@ class ApiClient {
 }
 
 // 创建API客户端实例
-const apiClient = new ApiClient('/api');
+const apiClient = new ApiClient();
+
+// 获取API端点的辅助函数
+function getEndpoint(key) {
+    if (window.API_CONFIG && window.API_CONFIG.ENDPOINTS[key]) {
+        return window.API_CONFIG.ENDPOINTS[key];
+    }
+    // 后备路径（本地开发）
+    const fallbackPaths = {
+        'ADMIN_LOGIN': '/api/admin/login',
+        'ADMIN_LOGOUT': '/api/admin/logout', 
+        'ADMIN_STATUS': '/api/admin/status',
+        'TEACHERS': '/api/teachers',
+        'SCHEDULES': '/api/schedules',
+        'SEMESTERS': '/api/semesters',
+        'COURSES': '/api/courses',
+        'SPECIAL_CARE': '/api/special-care',
+        'TASKS': '/api/tasks',
+        'NOTES': '/api/notes'
+    };
+    return fallbackPaths[key] || '/api';
+}
 
 /**
  * 教师API
@@ -114,7 +136,7 @@ const TeacherAPI = {
      * 获取所有教师
      */
     async getAll() {
-        return apiClient.get('/teachers');
+        return apiClient.get(getEndpoint('TEACHERS'));
     },
 
     /**
@@ -122,7 +144,7 @@ const TeacherAPI = {
      * @param {Object} teacherData 教师数据
      */
     async create(teacherData) {
-        return apiClient.post('/teachers', teacherData);
+        return apiClient.post(getEndpoint('TEACHERS'), teacherData);
     },
 
     /**
@@ -131,7 +153,7 @@ const TeacherAPI = {
      * @param {Object} teacherData 教师数据
      */
     async update(id, teacherData) {
-        return apiClient.put(`/teachers/${id}`, teacherData);
+        return apiClient.put(`${getEndpoint('TEACHERS')}/${id}`, teacherData);
     },
 
     /**
@@ -139,7 +161,7 @@ const TeacherAPI = {
      * @param {number} id 教师ID
      */
     async delete(id) {
-        return apiClient.delete(`/teachers/${id}`);
+        return apiClient.delete(`${getEndpoint('TEACHERS')}/${id}`);
     }
 };
 
@@ -152,7 +174,7 @@ const ScheduleAPI = {
      * @param {number} teacherId 教师ID
      */
     async getByTeacher(teacherId) {
-        return apiClient.get(`/schedules/teacher/${teacherId}`);
+        return apiClient.get(`${getEndpoint('SCHEDULES')}/teacher/${teacherId}`);
     },
 
     /**
@@ -161,7 +183,7 @@ const ScheduleAPI = {
      * @param {number} week 周次
      */
     async getWeekSchedule(scheduleId, week) {
-        return apiClient.get(`/schedules/${scheduleId}/week/${week}`);
+        return apiClient.get(`${getEndpoint('SCHEDULES')}/${scheduleId}/week/${week}`);
     },
 
     /**
@@ -169,7 +191,7 @@ const ScheduleAPI = {
      * @param {Object} scheduleData 课程表数据
      */
     async create(scheduleData) {
-        return apiClient.post('/schedules', scheduleData);
+        return apiClient.post(getEndpoint('SCHEDULES'), scheduleData);
     },
 
     /**
@@ -178,7 +200,7 @@ const ScheduleAPI = {
      * @param {Object} scheduleData 课程表数据
      */
     async update(id, scheduleData) {
-        return apiClient.put(`/schedules/${id}`, scheduleData);
+        return apiClient.put(`${getEndpoint('SCHEDULES')}/${id}`, scheduleData);
     },
 
     /**
@@ -186,7 +208,7 @@ const ScheduleAPI = {
      * @param {number} scheduleId 课程表ID
      */
     async saveOriginal(scheduleId) {
-        return apiClient.post(`/schedules/${scheduleId}/save-original`);
+        return apiClient.post(`${getEndpoint('SCHEDULES')}/${scheduleId}/save-original`);
     },
 
     /**
@@ -194,7 +216,7 @@ const ScheduleAPI = {
      * @param {number} scheduleId 课程表ID
      */
     async reset(scheduleId) {
-        return apiClient.post(`/schedules/${scheduleId}/reset`);
+        return apiClient.post(`${getEndpoint('SCHEDULES')}/${scheduleId}/reset`);
     },
 
     /**
@@ -202,7 +224,7 @@ const ScheduleAPI = {
      * @param {number} scheduleId 课程表ID
      */
     async getOriginalCourses(scheduleId) {
-        return apiClient.get(`/schedules/${scheduleId}/original`);
+        return apiClient.get(`${getEndpoint('SCHEDULES')}/${scheduleId}/original`);
     }
 };
 
@@ -215,7 +237,7 @@ const CourseAPI = {
      * @param {Object} courseData 课程数据
      */
     async create(courseData) {
-        return apiClient.post('/courses', courseData);
+        return apiClient.post(getEndpoint('COURSES'), courseData);
     },
 
     /**
@@ -224,7 +246,7 @@ const CourseAPI = {
      * @param {Object} moveData 移动数据
      */
     async move(id, moveData) {
-        return apiClient.put(`/courses/${id}/move`, moveData);
+        return apiClient.put(`${getEndpoint('COURSES')}/${id}/move`, moveData);
     },
 
     /**
@@ -233,7 +255,7 @@ const CourseAPI = {
      * @param {Object} courseData 课程数据
      */
     async update(id, courseData) {
-        return apiClient.put(`/courses/${id}`, courseData);
+        return apiClient.put(`${getEndpoint('COURSES')}/${id}`, courseData);
     },
 
     /**
@@ -241,7 +263,7 @@ const CourseAPI = {
      * @param {number} id 课程ID
      */
     async delete(id) {
-        return apiClient.delete(`/courses/${id}`);
+        return apiClient.delete(`${getEndpoint('COURSES')}/${id}`);
     },
 
     /**
@@ -249,7 +271,7 @@ const CourseAPI = {
      * @param {Array} courses 课程数组
      */
     async batchUpdate(courses) {
-        return apiClient.post('/courses/batch-update', { courses });
+        return apiClient.post(`${getEndpoint('COURSES')}/batch-update`, { courses });
     }
 };
 
@@ -262,7 +284,7 @@ const SpecialCareAPI = {
      * @param {number} scheduleId 课程表ID
      */
     async getBySchedule(scheduleId) {
-        return apiClient.get(`/special-care/schedule/${scheduleId}`);
+        return apiClient.get(`${getEndpoint('SPECIAL_CARE')}/schedule/${scheduleId}`);
     },
 
     /**
@@ -270,7 +292,7 @@ const SpecialCareAPI = {
      * @param {Object} specialCareData 特需托管数据
      */
     async create(specialCareData) {
-        return apiClient.post('/special-care', specialCareData);
+        return apiClient.post(getEndpoint('SPECIAL_CARE'), specialCareData);
     },
 
     /**
@@ -279,7 +301,7 @@ const SpecialCareAPI = {
      * @param {Object} specialCareData 特需托管数据
      */
     async update(id, specialCareData) {
-        return apiClient.put(`/special-care/${id}`, specialCareData);
+        return apiClient.put(`${getEndpoint('SPECIAL_CARE')}/${id}`, specialCareData);
     },
 
     /**
@@ -287,7 +309,7 @@ const SpecialCareAPI = {
      * @param {number} id 特需托管ID
      */
     async delete(id) {
-        return apiClient.delete(`/special-care/${id}`);
+        return apiClient.delete(`${getEndpoint('SPECIAL_CARE')}/${id}`);
     }
 };
 
@@ -299,7 +321,7 @@ const CalendarAPI = {
      * 获取当前学期信息
      */
     async getCurrentSemester() {
-        return apiClient.get('/calendar/semester/current');
+        return apiClient.get(`${getEndpoint('SEMESTERS')}/current`);
     },
 
     /**
@@ -307,7 +329,7 @@ const CalendarAPI = {
      * @param {Object} semesterData 学期数据
      */
     async createSemester(semesterData) {
-        return apiClient.post('/calendar/semester', semesterData);
+        return apiClient.post(getEndpoint('SEMESTERS'), semesterData);
     },
 
     /**
@@ -315,7 +337,7 @@ const CalendarAPI = {
      * @param {number} week 周次
      */
     async getWeekSpecialCare(week) {
-        return apiClient.get(`/calendar/week/${week}/special-care`);
+        return apiClient.get(`${getEndpoint('SPECIAL_CARE')}/week/${week}`);
     }
 };
 
@@ -551,7 +573,7 @@ const TaskAPI = {
      * 获取课程相关任务
      */
     async getCourseTask(scheduleId, weekday, timeSlot, teacherId = null) {
-        let url = `/tasks/course/${scheduleId}/${weekday}/${timeSlot}`;
+        let url = `${getEndpoint('TASKS')}/course/${scheduleId}/${weekday}/${timeSlot}`;
         if (teacherId) {
             url += `?teacherId=${teacherId}`;
         }
@@ -567,7 +589,7 @@ const TaskAPI = {
         if (filters.status) params.append('status', filters.status);
         if (filters.type) params.append('type', filters.type);
         
-        const url = `/tasks/teacher/${teacherId}${params.toString() ? '?' + params.toString() : ''}`;
+        const url = `${getEndpoint('TASKS')}/teacher/${teacherId}${params.toString() ? '?' + params.toString() : ''}`;
         return await apiClient.get(url);
     },
 
@@ -582,21 +604,21 @@ const TaskAPI = {
      * 创建任务
      */
     async create(taskData) {
-        return await apiClient.post('/tasks', taskData);
+        return await apiClient.post(getEndpoint('TASKS'), taskData);
     },
 
     /**
      * 更新任务
      */
     async update(id, taskData) {
-        return await apiClient.put(`/tasks/${id}`, taskData);
+        return await apiClient.put(`${getEndpoint('TASKS')}/${id}`, taskData);
     },
 
     /**
      * 删除任务
      */
     async delete(id) {
-        return await apiClient.delete(`/tasks/${id}`);
+        return await apiClient.delete(`${getEndpoint('TASKS')}/${id}`);
     },
 
     /**
@@ -627,14 +649,14 @@ const WeeklyNotesAPI = {
      * 获取随手记
      */
     async get(teacherId, scheduleId, year, week) {
-        return await apiClient.get(`/weekly-notes/${teacherId}/${scheduleId}/${year}/${week}`);
+        return await apiClient.get(`${getEndpoint('NOTES')}/${teacherId}/${scheduleId}/${year}/${week}`);
     },
 
     /**
      * 保存随手记
      */
     async save(teacherId, scheduleId, year, weekNumber, content) {
-        return await apiClient.post('/weekly-notes', {
+        return await apiClient.post(getEndpoint('NOTES'), {
             teacherId,
             scheduleId,
             year,

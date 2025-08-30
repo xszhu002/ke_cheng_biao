@@ -1,27 +1,33 @@
 version: '3.8'
 
 services:
-  schedule-app:
-    image: ghcr.io/xszhu002/ke_cheng_biao:latest
-    container_name: schedule-app
+  # 后端API服务
+  backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: kechengbiao-backend
     ports:
-      - "3000:3000"
+      - "301:301"  # 后端API端口
+    volumes:
+      - ./database:/app/database  # 数据库文件映射
     environment:
       - NODE_ENV=production
-      - PORT=3000
-    volumes:
-      # 持久化数据库文件 - 容器内路径: /app/database
-      - schedule_data:/app/database
-      # 或者映射到宿主机目录（取消注释下面一行，注释上面一行）
-      # - ./data:/app/database
+      - PORT=301
     restart: unless-stopped
+    networks:
+      - kechengbiao-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:301/api/admin/check', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
+networks:
+  kechengbiao-network:
+    driver: bridge
+
 volumes:
-  schedule_data:
+  database:
     driver: local 
